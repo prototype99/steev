@@ -1,0 +1,68 @@
+diff -Naur tilda-0.09.4-orig/src/load_tilda.c tilda-0.09.4/src/load_tilda.c
+--- tilda-0.09.4-orig/src/load_tilda.c	2006-11-28 14:56:43.000000000 +0900
++++ tilda-0.09.4/src/load_tilda.c	2007-01-06 03:05:09.302099002 +0900
+@@ -140,11 +140,8 @@
+     if (cfg_getbool (tw->tc, "enable_transparency") && transparency_level > 0)
+     {
+         vte_terminal_set_background_saturation (VTE_TERMINAL (tt->vte_term), transparency_level);
+-        vte_terminal_set_background_transparent (VTE_TERMINAL(tt->vte_term), TRUE);
+-    }
+-    else
+-    {
+-        vte_terminal_set_background_transparent (VTE_TERMINAL(tt->vte_term), FALSE);
++        vte_terminal_set_opacity (VTE_TERMINAL (tt->vte_term), (1.0 - transparency_level) * 0xffff);
++        vte_terminal_set_background_transparent (VTE_TERMINAL(tt->vte_term), !tw->have_argb_visual);
+     }
+ 
+     vte_terminal_set_background_tint_color (VTE_TERMINAL(tt->vte_term), &tint);
+diff -Naur tilda-0.09.4-orig/src/tilda_window.c tilda-0.09.4/src/tilda_window.c
+--- tilda-0.09.4-orig/src/tilda_window.c	2006-11-28 14:05:59.000000000 +0900
++++ tilda-0.09.4/src/tilda_window.c	2007-01-05 19:43:20.335314990 +0900
+@@ -93,6 +93,28 @@
+     CFG_END()
+ };
+ 
++static void
++initialize_alpha_mode (tilda_window *tw)
++{
++    GdkScreen *screen;
++    GdkColormap *colormap;
++
++    screen = gtk_widget_get_screen (GTK_WIDGET (tw->window));
++    colormap = gdk_screen_get_rgba_colormap (screen);
++    if (colormap != NULL && gdk_screen_is_composited (screen))
++	{
++		/* Set RGBA colormap if possible so VTE can use real alpha
++		 * channels for transparency. */
++
++		gtk_widget_set_colormap(GTK_WIDGET (tw->window), colormap);
++		tw->have_argb_visual = TRUE;
++	}
++	else
++	{
++		tw->have_argb_visual = FALSE;
++	}
++}
++
+ /**
+  * Get a pointer to the config file name for this instance.
+  *
+@@ -282,6 +304,7 @@
+     /* Create a window to hold the scrolling shell, and hook its
+      * delete event to the quit function.. */
+     tw->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++    initialize_alpha_mode (tw);
+     gtk_container_set_resize_mode (GTK_CONTAINER(tw->window), GTK_RESIZE_IMMEDIATE);
+     g_signal_connect (G_OBJECT(tw->window), "delete_event", GTK_SIGNAL_FUNC(deleted_and_quit), tw->window);
+ 
+diff -Naur tilda-0.09.4-orig/src/tilda_window.h tilda-0.09.4/src/tilda_window.h
+--- tilda-0.09.4-orig/src/tilda_window.h	2006-08-25 00:03:16.000000000 +0900
++++ tilda-0.09.4/src/tilda_window.h	2007-01-05 19:43:20.359317020 +0900
+@@ -37,6 +37,7 @@
+     gchar *config_file;
+     gboolean config_writing_disabled;
+     gint instance;
++    gboolean have_argb_visual;
+ 
+     /* Stores all configuration */
+     cfg_t *tc;

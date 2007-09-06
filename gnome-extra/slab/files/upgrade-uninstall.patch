@@ -1,0 +1,31 @@
+--- libslab/src/application-tile.c	2006-08-16 14:14:17.000000000 -0600
++++ libslab/src/application-tile.c.new	2006-09-21 11:05:32.000000000 -0600
+@@ -384,7 +384,7 @@
+ 		gtk_container_add (GTK_CONTAINER (context_menu), menu_item);
+ 	}
+ 
+-/* make upgrade action */
++/* make upgrade action
+ 
+ 	if (verify_package_management_command (SLAB_UPGRADE_PACKAGE_KEY)) {
+ 		action = tile_action_new (TILE (this), upgrade_trigger, _("Upgrade"), 0);
+@@ -393,7 +393,9 @@
+ 		gtk_container_add (menu_ctnr, menu_item);
+ 	}
+ 
+-/* make uninstall action */
++*/
++
++/* make uninstall action
+ 
+ 	if (verify_package_management_command (SLAB_UNINSTALL_PACKAGE_KEY)) {
+ 		action = tile_action_new (TILE (this), uninstall_trigger, _("Uninstall"), 0);
+@@ -402,6 +404,8 @@
+ 		gtk_container_add (menu_ctnr, menu_item);
+ 	}
+ 
++*/
++
+ 	priv->gconf_client = gconf_client_get_default ();
+ 	priv->gconf_conn_id = gconf_client_notify_add (
+ 		priv->gconf_client,

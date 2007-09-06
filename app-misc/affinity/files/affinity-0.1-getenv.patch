@@ -1,0 +1,11 @@
+diff -ur affinity-0.1.orig/src/aff-settings.c affinity-0.1/src/aff-settings.c
+--- affinity-0.1.orig/src/aff-settings.c	2007-03-16 01:37:30.000000000 +0200
++++ affinity-0.1/src/aff-settings.c	2007-08-05 16:16:22.000000000 +0300
+@@ -22,6 +22,7 @@
+ #include <config.h>
+ #endif
+ 
++#include <stdlib.h>
+ #include <libgnome/gnome-i18n.h>
+ #include "aff-settings.h"
+ 

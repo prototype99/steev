@@ -1,0 +1,68 @@
+diff -ru exempi-1.99.3.orig/m4/ax_boost_unit_test_framework.m4 exempi-1.99.3/m4/ax_boost_unit_test_framework.m4
+--- exempi-1.99.3.orig/m4/ax_boost_unit_test_framework.m4	2007-05-22 23:30:37.000000000 -0400
++++ exempi-1.99.3/m4/ax_boost_unit_test_framework.m4	2007-07-16 01:07:26.000000000 -0400
+@@ -57,9 +57,9 @@
+ 		CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+ 		export CPPFLAGS
+ 
+-		LDFLAGS_SAVED="$LDFLAGS"
+-		LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
+-		export LDFLAGS
++		LIBS_SAVED="$LIBS"
++		LIBS="$LIBS $BOOST_LDFLAGS"
++		export LIBS
+ 
+         AC_CACHE_CHECK(whether the Boost::Unit_Test_Framework library is available,
+ 					   ax_cv_boost_unit_test_framework,
+@@ -74,11 +74,11 @@
+ 			AC_DEFINE(HAVE_BOOST_UNIT_TEST_FRAMEWORK,,[define if the Boost::Unit_Test_Framework library is available])
+ 			BN=boost_unit_test_framework
+             if test "x$ax_boost_user_unit_test_framework_lib" = "x"; then
+-         		saved_ldflags="${LDFLAGS}"
++         		saved_libs="${LIBS}"
+ 		    	for ax_lib in $BN $BN-$CC $BN-$CC-mt $BN-$CC-mt-s $BN-$CC-s \
+                              lib$BN lib$BN-$CC lib$BN-$CC-mt lib$BN-$CC-mt-s lib$BN-$CC-s \
+                              $BN-mgw $BN-mgw $BN-mgw-mt $BN-mgw-mt-s $BN-mgw-s ; do
+-                   LDFLAGS="${LDFLAGS} -l$ax_lib"
++                   LIBS="${LIBS} -l$ax_lib"
+     			   AC_CACHE_CHECK(Boost::UnitTestFramework library linkage,
+ 	      			    		   ax_cv_boost_unit_test_framework_link,
+ 						  [AC_LANG_PUSH([C++])
+@@ -93,7 +93,7 @@
+                                  link_unit_test_framework="yes",link_unit_test_framework="no")
+ 			      AC_LANG_POP([C++])
+                   ])
+-                  LDFLAGS="${saved_ldflags}"
++                  LIBS="${saved_libs}"
+ 
+ 			      if test "x$link_unit_test_framework" = "xyes"; then
+                       BOOST_UNIT_TEST_FRAMEWORK_LIB="-l$ax_lib"
+@@ -102,9 +102,9 @@
+ 				  fi
+                 done
+             else
+-         		saved_ldflags="${LDFLAGS}"
++         		saved_libs="${LIBS}"
+                for ax_lib in $ax_boost_user_unit_test_framework_lib $BN-$ax_boost_user_unit_test_framework_lib; do
+-                   LDFLAGS="${LDFLAGS} -l$ax_lib"
++                   LIBS="${LIBS} -l$ax_lib"
+               			   AC_CACHE_CHECK(Boost::UnitTestFramework library linkage,
+ 	      			    		   ax_cv_boost_unit_test_framework_link,
+ 						  [AC_LANG_PUSH([C++])
+@@ -119,7 +119,7 @@
+                                  link_unit_test_framework="yes",link_unit_test_framework="no")
+ 			      AC_LANG_POP([C++])
+                   ])
+-                  LDFLAGS="${saved_ldflags}"
++                  LIBS="${saved_libs}"
+ 			      if test "x$link_unit_test_framework" = "xyes"; then
+                       BOOST_UNIT_TEST_FRAMEWORK_LIB="-l$ax_lib"
+                       AC_SUBST(BOOST_UNIT_TEST_FRAMEWORK_LIB)
+@@ -133,6 +133,6 @@
+ 		fi
+ 
+ 		CPPFLAGS="$CPPFLAGS_SAVED"
+-    	LDFLAGS="$LDFLAGS_SAVED"
++    	LIBS="$LIBS_SAVED"
+ 	fi
+ ])

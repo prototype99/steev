@@ -1,0 +1,646 @@
+diff -r -u last-exit-2.0/AUTHORS last-exit-2.0.patch/AUTHORS
+--- last-exit-2.0/AUTHORS	2006-03-29 00:27:18.000000000 +0200
++++ last-exit-2.0.patch/AUTHORS	2006-08-05 02:10:35.000000000 +0200
+@@ -1 +1,3 @@
+ Iain <iain@gnome.org>
++Reda El Khattabi <reda.ea@gmail.com>
++
+diff -r -u last-exit-2.0/data/glade/PlayerWindow.glade last-exit-2.0.patch/data/glade/PlayerWindow.glade
+--- last-exit-2.0/data/glade/PlayerWindow.glade	2006-07-26 23:19:51.000000000 +0200
++++ last-exit-2.0.patch/data/glade/PlayerWindow.glade	2006-08-05 02:10:35.000000000 +0200
+@@ -370,6 +370,85 @@
+ 		      </child>
+ 
+ 		      <child>
++			<widget class="GtkButton" id="save_button">
++			  <property name="visible">True</property>
++			  <property name="tooltip" translatable="yes">Save this song</property>
++			  <property name="can_focus">True</property>
++			  <property name="relief">GTK_RELIEF_NORMAL</property>
++			  <property name="focus_on_click">True</property>
++
++			  <child>
++			    <widget class="GtkAlignment" id="alignment5">
++			      <property name="visible">True</property>
++			      <property name="xalign">0.5</property>
++			      <property name="yalign">0.5</property>
++			      <property name="xscale">0</property>
++			      <property name="yscale">0</property>
++			      <property name="top_padding">0</property>
++			      <property name="bottom_padding">0</property>
++			      <property name="left_padding">0</property>
++			      <property name="right_padding">0</property>
++
++			      <child>
++				<widget class="GtkHBox" id="hbox14">
++				  <property name="visible">True</property>
++				  <property name="homogeneous">False</property>
++				  <property name="spacing">2</property>
++
++				  <child>
++				    <widget class="GtkImage" id="image12">
++				      <property name="visible">True</property>
++				      <property name="stock">gtk-save-as</property>
++				      <property name="icon_size">4</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++
++				  <child>
++				    <widget class="GtkLabel" id="label4">
++				      <property name="visible">True</property>
++				      <property name="label" translatable="yes">Save</property>
++				      <property name="use_underline">True</property>
++				      <property name="use_markup">False</property>
++				      <property name="justify">GTK_JUSTIFY_LEFT</property>
++				      <property name="wrap">False</property>
++				      <property name="selectable">False</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
++				      <property name="width_chars">-1</property>
++				      <property name="single_line_mode">False</property>
++				      <property name="angle">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++				</widget>
++			      </child>
++			    </widget>
++			  </child>
++			</widget>
++			<packing>
++			  <property name="padding">0</property>
++			  <property name="expand">False</property>
++			  <property name="fill">False</property>
++			</packing>
++		      </child>
++
++		      <child>
+ 			<widget class="GtkButton" id="info_button">
+ 			  <property name="visible">True</property>
+ 			  <property name="tooltip" translatable="yes">Information</property>
+@@ -378,14 +457,66 @@
+ 			  <property name="focus_on_click">True</property>
+ 
+ 			  <child>
+-			    <widget class="GtkImage" id="image6">
++			    <widget class="GtkAlignment" id="alignment4">
+ 			      <property name="visible">True</property>
+-			      <property name="stock">gtk-info</property>
+-			      <property name="icon_size">4</property>
+ 			      <property name="xalign">0.5</property>
+ 			      <property name="yalign">0.5</property>
+-			      <property name="xpad">0</property>
+-			      <property name="ypad">0</property>
++			      <property name="xscale">0</property>
++			      <property name="yscale">0</property>
++			      <property name="top_padding">0</property>
++			      <property name="bottom_padding">0</property>
++			      <property name="left_padding">0</property>
++			      <property name="right_padding">0</property>
++
++			      <child>
++				<widget class="GtkHBox" id="hbox13">
++				  <property name="visible">True</property>
++				  <property name="homogeneous">False</property>
++				  <property name="spacing">2</property>
++
++				  <child>
++				    <widget class="GtkImage" id="image11">
++				      <property name="visible">True</property>
++				      <property name="stock">gtk-info</property>
++				      <property name="icon_size">4</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++
++				  <child>
++				    <widget class="GtkLabel" id="label3">
++				      <property name="visible">True</property>
++				      <property name="label" translatable="yes">Info</property>
++				      <property name="use_underline">True</property>
++				      <property name="use_markup">False</property>
++				      <property name="justify">GTK_JUSTIFY_LEFT</property>
++				      <property name="wrap">False</property>
++				      <property name="selectable">False</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
++				      <property name="width_chars">-1</property>
++				      <property name="single_line_mode">False</property>
++				      <property name="angle">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++				</widget>
++			      </child>
+ 			    </widget>
+ 			  </child>
+ 			</widget>
+@@ -406,14 +537,66 @@
+ 			  <property name="focus_on_click">True</property>
+ 
+ 			  <child>
+-			    <widget class="GtkImage" id="image8">
++			    <widget class="GtkAlignment" id="alignment3">
+ 			      <property name="visible">True</property>
+-			      <property name="stock">gtk-edit</property>
+-			      <property name="icon_size">4</property>
+ 			      <property name="xalign">0.5</property>
+ 			      <property name="yalign">0.5</property>
+-			      <property name="xpad">0</property>
+-			      <property name="ypad">0</property>
++			      <property name="xscale">0</property>
++			      <property name="yscale">0</property>
++			      <property name="top_padding">0</property>
++			      <property name="bottom_padding">0</property>
++			      <property name="left_padding">0</property>
++			      <property name="right_padding">0</property>
++
++			      <child>
++				<widget class="GtkHBox" id="hbox12">
++				  <property name="visible">True</property>
++				  <property name="homogeneous">False</property>
++				  <property name="spacing">2</property>
++
++				  <child>
++				    <widget class="GtkImage" id="image10">
++				      <property name="visible">True</property>
++				      <property name="stock">gtk-edit</property>
++				      <property name="icon_size">4</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++
++				  <child>
++				    <widget class="GtkLabel" id="label2">
++				      <property name="visible">True</property>
++				      <property name="label" translatable="yes">Journal</property>
++				      <property name="use_underline">True</property>
++				      <property name="use_markup">False</property>
++				      <property name="justify">GTK_JUSTIFY_LEFT</property>
++				      <property name="wrap">False</property>
++				      <property name="selectable">False</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
++				      <property name="width_chars">-1</property>
++				      <property name="single_line_mode">False</property>
++				      <property name="angle">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++				</widget>
++			      </child>
+ 			    </widget>
+ 			  </child>
+ 			</widget>
+@@ -434,14 +617,66 @@
+ 			  <property name="focus_on_click">True</property>
+ 
+ 			  <child>
+-			    <widget class="GtkImage" id="image7">
++			    <widget class="GtkAlignment" id="alignment2">
+ 			      <property name="visible">True</property>
+-			      <property name="stock">gtk-justify-fill</property>
+-			      <property name="icon_size">4</property>
+ 			      <property name="xalign">0.5</property>
+ 			      <property name="yalign">0.5</property>
+-			      <property name="xpad">0</property>
+-			      <property name="ypad">0</property>
++			      <property name="xscale">0</property>
++			      <property name="yscale">0</property>
++			      <property name="top_padding">0</property>
++			      <property name="bottom_padding">0</property>
++			      <property name="left_padding">0</property>
++			      <property name="right_padding">0</property>
++
++			      <child>
++				<widget class="GtkHBox" id="hbox11">
++				  <property name="visible">True</property>
++				  <property name="homogeneous">False</property>
++				  <property name="spacing">2</property>
++
++				  <child>
++				    <widget class="GtkImage" id="image9">
++				      <property name="visible">True</property>
++				      <property name="stock">gtk-justify-fill</property>
++				      <property name="icon_size">4</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++
++				  <child>
++				    <widget class="GtkLabel" id="label1">
++				      <property name="visible">True</property>
++				      <property name="label" translatable="yes">Tags</property>
++				      <property name="use_underline">True</property>
++				      <property name="use_markup">False</property>
++				      <property name="justify">GTK_JUSTIFY_LEFT</property>
++				      <property name="wrap">False</property>
++				      <property name="selectable">False</property>
++				      <property name="xalign">0.5</property>
++				      <property name="yalign">0.5</property>
++				      <property name="xpad">0</property>
++				      <property name="ypad">0</property>
++				      <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
++				      <property name="width_chars">-1</property>
++				      <property name="single_line_mode">False</property>
++				      <property name="angle">0</property>
++				    </widget>
++				    <packing>
++				      <property name="padding">0</property>
++				      <property name="expand">False</property>
++				      <property name="fill">False</property>
++				    </packing>
++				  </child>
++				</widget>
++			      </child>
+ 			    </widget>
+ 			  </child>
+ 			</widget>
+diff -r -u last-exit-2.0/liblast-exit/player.c last-exit-2.0.patch/liblast-exit/player.c
+--- last-exit-2.0/liblast-exit/player.c	2006-07-26 22:40:26.000000000 +0200
++++ last-exit-2.0.patch/liblast-exit/player.c	2006-08-05 02:12:22.000000000 +0200
+@@ -19,6 +19,10 @@
+  */
+ 
+ #define _GNU_SOURCE
++#include <stdio.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
+ #include <config.h>
+ #include <string.h>
+ #include <math.h>
+@@ -35,6 +39,11 @@
+ 	
+ struct _PlayerPrivate {
+ 	GstElement *play;
++	GstElement *multisink;
++	GstElement *src;
++	GstElement *volume;
++	
++	gchar *save_location;
+ };
+ 
+ static GObjectClass *parent_class;
+@@ -78,6 +87,8 @@
+ 				       NULL, NULL,
+ 				       g_cclosure_marshal_VOID__STRING,
+ 				       G_TYPE_NONE, 1, G_TYPE_STRING);
++	
++	gst_init (NULL, NULL);
+ }
+ 
+ static void
+@@ -122,6 +133,43 @@
+ }
+ 
+ static void
++change_dump_file (Player *player, gboolean create_new_file)
++{
++	gint fd;
++	gchar *temp_file_location = g_build_filename (g_get_home_dir (), ".lastfm.mp3", NULL);
++	
++	g_signal_emit_by_name (player->priv->multisink, "clear", fd);
++	if (player->priv->save_location != NULL)
++	{
++		/* We wanted to save the file */
++		fd = rename (temp_file_location, player->priv->save_location);
++		if (fd == -1)
++		{
++			perror("Error Occured while moving dump file to destination:");
++		}
++		g_free (player->priv->save_location);
++		player->priv->save_location = NULL;
++	}
++	
++	if (create_new_file)
++	{
++		fd = open (temp_file_location, O_WRONLY|O_CREAT|O_TRUNC, 0644);
++		if (fd == -1)
++		{
++			perror("Error Occured while opening the file:");
++		}
++		
++		g_signal_emit_by_name (player->priv->multisink, "add", fd);
++	}
++	else
++	{
++		unlink (temp_file_location);
++	}
++	
++	g_free (temp_file_location);
++}
++
++static void
+ post_new_song_message (Player *player)
+ {
+ 	GstMessage *msg;
+@@ -133,12 +181,23 @@
+ 
+ 	bus = gst_pipeline_get_bus (GST_PIPELINE (player->priv->play));
+ 	gst_bus_post (bus, msg);
++	
++	change_dump_file (player, TRUE);
+ }
+ 
+-static gboolean
+-have_data_cb (GstPad *pad,
+-	      GstBuffer *buffer,
+-	      Player *player)
++static void
++client_removed (GstElement* multisink,
++                  gint fd,
++                  guint status,
++                  gpointer user_data)
++{
++	close(fd);
++}
++
++static void
++identity_handoff (GstElement *id,
++		  GstBuffer *buffer,
++		  Player *player)
+ {
+ 	char *data = GST_BUFFER_DATA (buffer);
+ 	char *s;
+@@ -152,52 +211,7 @@
+ 	s = memmem (data, GST_BUFFER_SIZE (buffer), sync, 4);
+ 	if (s != NULL) {
+ 		post_new_song_message (player);
+-	} 
+-#if 0
+-	else if (req > 0) {
+-		if (strncmp (data, sync + (4 - req), req) == 0) {
+-			post_new_song_message (player);
+-		}
+-
+-		// Reset req
+-		req = 0;
+-	} else {
+-		guint len = GST_BUFFER_SIZE (buffer);
+-		char *e = data + (len - 3);
+-
+-		// Is it even possible for the SYNC to get split over two
+-		// different buffers? 
+-
+-		// Check if there is any of SYN in the last three chars
+-		if (*(e + 2) == 'S') {
+-			req = 3;
+-		} else if ((*(e + 2) == 'Y') && (*(e + 1) == 'S')) {
+-			req = 2;
+-		} else if ((*(e + 2) == 'N') && (*(e + 1) == 'Y') && (*e == 'S')) {
+-			req = 1;
+-		} else {
+-			req = 0;
+-		}
+ 	}
+-#endif
+-
+-	return TRUE;
+-}
+-
+-static void
+-src_setup (GObject *object,
+-	   GParamSpec *pspec,
+-	   Player *player)
+-{
+-	GstElement *src;
+-	GstPad *pad;
+-
+-	g_object_get (G_OBJECT (player->priv->play),
+-		      "source", &src,
+-		      NULL);
+-
+-	pad = gst_element_get_pad (src, "src");
+-	gst_pad_add_buffer_probe (pad, G_CALLBACK (have_data_cb), player);
+ }
+ 
+ static void
+@@ -206,11 +220,27 @@
+ {
+ 	PlayerPrivate *priv = player->priv;
+ 
+-	gst_init (NULL, NULL);
+-
+-	priv->play = gst_element_factory_make ("playbin", "last-fm-player");
+-	g_signal_connect (G_OBJECT (priv->play), "notify::source",
+-			  G_CALLBACK (src_setup), player);
++	GstElement *bin;
++	GstElement *last_fm;
++	
++	priv->play = gst_pipeline_new ("last-fm-pipeline");
++	bin = gst_parse_bin_from_description (
++		"gnomevfssrc name=src ! identity name=last-fm ! tee name=t "
++		"t. ! queue ! mad ! audioconvert ! volume name=volume ! alsasink "
++		"t. ! queue ! multifdsink name=file sync-method=2",
++		TRUE,
++		NULL);
++	
++	last_fm = gst_bin_get_by_name (GST_BIN (bin), "last-fm");
++	g_signal_connect (G_OBJECT (last_fm), "handoff",
++			  G_CALLBACK (identity_handoff), player);
++			  
++	priv->src = gst_bin_get_by_name (GST_BIN (bin), "src");
++	priv->volume = gst_bin_get_by_name (GST_BIN (bin), "volume");
++	priv->multisink = gst_bin_get_by_name (GST_BIN (bin), "file");
++	g_signal_connect(priv->multisink, "client-removed", G_CALLBACK (client_removed), NULL);
++	
++	gst_bin_add (GST_BIN (priv->play), bin);
+ 
+ 	gst_bus_add_watch (gst_pipeline_get_bus (GST_PIPELINE (priv->play)),
+ 			   bus_message_cb, player);
+@@ -254,14 +284,20 @@
+ {
+ /* 	player_stop (player); */
+ 
+-	g_object_set (G_OBJECT (player->priv->play), 
+-		      "uri", location, 
+-		      NULL);
++	g_object_set (G_OBJECT (player->priv->src),
++		      "location", location, NULL);
+ 
+ 	return TRUE;
+ }
+ 
+ void
++player_set_save_location (Player *player,
++		     const char *location)
++{
++	player->priv->save_location = g_strdup (location);
++}
++
++void
+ player_play (Player *player)
+ {
+ 	gst_element_set_state (GST_ELEMENT (player->priv->play), 
+@@ -273,6 +309,7 @@
+ {
+ 	gst_element_set_state (GST_ELEMENT (player->priv->play), 
+ 			       GST_STATE_READY);
++	change_dump_file (player, FALSE);
+ }
+ 
+ void
+@@ -283,7 +320,7 @@
+ 
+ 	vol = CLAMP (volume, 0, 100) / 100.0;
+ 
+-	g_object_set (G_OBJECT (player->priv->play),
++	g_object_set (G_OBJECT (player->priv->volume),
+ 		      "volume", vol,
+ 		      NULL);
+ }
+diff -r -u last-exit-2.0/liblast-exit/player.h last-exit-2.0.patch/liblast-exit/player.h
+--- last-exit-2.0/liblast-exit/player.h	2006-07-20 23:39:05.000000000 +0200
++++ last-exit-2.0.patch/liblast-exit/player.h	2006-08-05 02:10:35.000000000 +0200
+@@ -46,6 +46,8 @@
+ Player *player_new (void);
+ gboolean player_set_location (Player *player,
+ 			      const char *location);
++void player_set_save_location (Player *player,
++			      const char *location);
+ void player_play (Player *player);
+ void player_stop (Player *player);
+ 
+diff -r -u last-exit-2.0/src/Driver.cs last-exit-2.0.patch/src/Driver.cs
+--- last-exit-2.0/src/Driver.cs	2006-07-27 00:23:07.000000000 +0200
++++ last-exit-2.0.patch/src/Driver.cs	2006-08-05 02:10:35.000000000 +0200
+@@ -127,7 +127,8 @@
+ 		}
+ 
+ 		public static void Exit () {
+-			Environment.Exit (0);
++			player.Stop();
++			Application.Quit ();
+ 		}
+ 
+ 		// FIXME: Needs to handle no gnome-open.
+diff -r -u last-exit-2.0/src/Player.cs last-exit-2.0.patch/src/Player.cs
+--- last-exit-2.0/src/Player.cs	2006-07-20 23:37:19.000000000 +0200
++++ last-exit-2.0.patch/src/Player.cs	2006-08-05 02:10:35.000000000 +0200
+@@ -61,6 +61,15 @@
+ 				player_set_location (Raw, value);
+ 			}
+ 		}
++		
++		[DllImport ("liblastexit")]
++			private static extern void player_set_save_location (IntPtr player, 
++									string filename);
++		public string SaveLocation {
++			set {
++				player_set_save_location (Raw, value);
++			}
++		}
+ 
+ 		[DllImport ("liblastexit")]
+ 			private static extern void player_play (IntPtr player);
+diff -r -u last-exit-2.0/src/PlayerWindow.cs last-exit-2.0.patch/src/PlayerWindow.cs
+--- last-exit-2.0/src/PlayerWindow.cs	2006-07-27 01:21:17.000000000 +0200
++++ last-exit-2.0.patch/src/PlayerWindow.cs	2006-08-05 02:13:12.000000000 +0200
+@@ -40,8 +40,6 @@
+ 		[Glade.Widget] private Button next_button;
+ 		[Glade.Widget] private Button love_button;
+ 		[Glade.Widget] private Button hate_button;
+-		[Glade.Widget] private Button tag_button;
+-		[Glade.Widget] private Button journal_button;
+ 
+ 		private VolumeButton volume_button;
+ 
+@@ -51,6 +49,9 @@
+ 		private UrlLabel song_label;
+ 
+ 		[Glade.Widget] private Button info_button;
++		[Glade.Widget] private Button journal_button;
++		[Glade.Widget] private Button tag_button;
++		[Glade.Widget] private Button save_button;
+ 
+ 		[Glade.Widget] private ComboBox station_combo;
+ 
+@@ -152,6 +153,7 @@
+ 			tag_button.Clicked += new EventHandler (OnTagButtonClicked);
+ 			journal_button.Clicked += new EventHandler (OnJournalButtonClicked);
+ 			info_button.Clicked += new EventHandler (OnInfoButtonClicked);
++			save_button.Clicked += new EventHandler (OnSaveButtonClicked);
+ 			KeyPressEvent += OnKeyPressEvent;
+ 
+ 			// Volume
+@@ -490,6 +492,25 @@
+ 			i_window.Response += new ResponseHandler (OnInfoWindowResponse);
+ 		}
+ 
++		private void OnSaveButtonClicked (object o, EventArgs args)
++		{
++			FileChooserDialog filechooser = new FileChooserDialog("Choose Song directory", this, FileChooserAction.SelectFolder,
++								Stock.Cancel, ResponseType.Cancel,
++								Stock.Save, ResponseType.Accept);
++								
++			int response = filechooser.Run();
++			if ((ResponseType) response == ResponseType.Accept && current_song != null)
++			{
++				string artist = current_song.Artist.Replace("/","-");
++				string album = current_song.Album.Replace("/","-");
++				string track =  current_song.Track.Replace("/","-");
++				string filename = String.Format("{0}/{1} - {2} - {3}.mp3", filechooser.CurrentFolder, artist, album, track);
++				Console.WriteLine("Setting up to save song at: {0}", filename);
++				Driver.player.SaveLocation = filename;
++			}
++			filechooser.Destroy();
++		}
++
+ 		private void OnVolumeChanged (int vol) 
+ 		{
+ 			Driver.player.Volume = vol;

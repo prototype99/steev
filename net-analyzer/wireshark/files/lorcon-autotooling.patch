@@ -1,0 +1,48 @@
+--- gtk/Makefile.am	2007-08-04 23:50:18.000000000 -0500
++++ gtk/Makefile.am	2007-08-05 01:35:48.000000000 -0500
+@@ -152,8 +152,9 @@
+ 	win32-file-dlg.h
+ 
+ # Common headers
+-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/wiretap $(LIBGCRYPT_CFLAGS) $(LIBGNUTLS_CFLAGS) $(PORTAUDIO_INCLUDES)
++AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/wiretap $(LIBGCRYPT_CFLAGS) $(LIBGNUTLS_CFLAGS) $(PORTAUDIO_INCLUDES) $(GTKHEX_CFLAGS)
+ 
++libui_a_LIBADD = $(GTKHEX_LIBS)
+ 
+ doxygen:
+ if HAVE_DOXYGEN
+--- configure.in	2007-08-04 23:53:47.000000000 -0500
++++ configure.in	2007-08-05 00:07:04.000000000 -0500
+@@ -494,6 +494,10 @@
+ if test "x$enable_gtk2" = "xyes" -a "x$enable_wireshark" = "xyes"; then
+ 	GTK_OK=two
+ 	AM_PATH_GTK_2_0(2.0.0, CFLAGS="$CFLAGS $GTK_CFLAGS", GTK_OK=no, gthread)
++
++	PKG_CHECK_MODULES(GTKHEX, [ gtkhex >= 1.0.0 ])
++	AC_SUBST(GTKHEX_CFLAGS)
++	AC_SUBST(GTKHEX_LIBS)
+ elif test "x$enable_gtk2" != "xyes" -a "x$enable_wireshark" = "xyes"; then
+ 	GTK_OK=one
+ 	AM_PATH_GTK(1.2.0, CFLAGS="$CFLAGS $GTK_CFLAGS", GTK_OK=no )
+--- Makefile.am	2007-08-05 01:33:05.000000000 -0500
++++ Makefile.am	2007-08-05 01:49:22.000000000 -0500
+@@ -280,7 +280,7 @@
+ 	$(wireshark_optional_objects)	\
+ 	gtk/libui.a			\
+ 	codecs/libcodec.a		\
+-	wiretap/libwiretap.la		\
++	${top_builddir}/wiretap/libwiretap.la		\
+ 	epan/libwireshark.la		\
+ 	@INET_PTON_LO@			\
+ 	@SNMP_LIBS@ @SSL_LIBS@ 		\
+@@ -290,7 +290,9 @@
+ 	@LIBICONV@			\
+ 	@LIBGCRYPT_LIBS@		\
+ 	@LIBGNUTLS_LIBS@		\
+-	@PORTAUDIO_LIBS@
++	@PORTAUDIO_LIBS@		\
++	$(GTKHEX_LIBS)			\
++	-lorcon
+ 
+ if ENABLE_STATIC
+ tshark_LDFLAGS = -Wl,-static -all-static

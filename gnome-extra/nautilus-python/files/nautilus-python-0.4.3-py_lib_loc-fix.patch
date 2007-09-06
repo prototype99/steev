@@ -1,0 +1,878 @@
+diff -u -r -N a/autogen.sh b/autogen.sh
+--- autogen.sh	1969-12-31 16:00:00.000000000 -0800
++++ autogen.sh	2007-07-29 10:33:07.000000000 -0700
+@@ -0,0 +1,422 @@
++#!/bin/sh
++# Run this to generate all the initial makefiles, etc.
++
++#name of package
++PKG_NAME=${PKG_NAME:-nautilus-python}
++srcdir=${srcdir:-.}
++ACLOCAL_FLAGS="-I m4 $ACLOCAL_FLAGS"
++
++# default version requirements ...
++REQUIRED_AUTOCONF_VERSION=${REQUIRED_AUTOCONF_VERSION:-2.53}
++REQUIRED_AUTOMAKE_VERSION=${REQUIRED_AUTOMAKE_VERSION:-1.7}
++REQUIRED_LIBTOOL_VERSION=${REQUIRED_LIBTOOL_VERSION:-1.4.3}
++REQUIRED_GETTEXT_VERSION=${REQUIRED_GETTEXT_VERSION:-0.10.40}
++REQUIRED_GLIB_GETTEXT_VERSION=${REQUIRED_GLIB_GETTEXT_VERSION:-2.2.0}
++REQUIRED_INTLTOOL_VERSION=${REQUIRED_INTLTOOL_VERSION:-0.25}
++REQUIRED_PKG_CONFIG_VERSION=${REQUIRED_PKG_CONFIG_VERSION:-0.14.0}
++REQUIRED_GTK_DOC_VERSION=${REQUIRED_GTK_DOC_VERSION:-1.0}
++REQUIRED_DOC_COMMON_VERSION=${REQUIRED_DOC_COMMON_VERSION:-2.3.0}
++
++# a list of required m4 macros.  Package can set an initial value
++REQUIRED_M4MACROS=${REQUIRED_M4MACROS:-}
++FORBIDDEN_M4MACROS=${FORBIDDEN_M4MACROS:-}
++
++# Not all echo versions allow -n, so we check what is possible. This test is
++# based on the one in autoconf.
++case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
++  *c*,-n*) ECHO_N= ;;
++  *c*,*  ) ECHO_N=-n ;;
++  *)       ECHO_N= ;;
++esac
++
++# if GNOME2_DIR or GNOME2_PATH is set, modify ACLOCAL_FLAGS ...
++# NOTE: GNOME2_DIR is deprecated (as of Jan 2004), but is left here for
++# backwards-compatibility. You should be using GNOME2_PATH, since that is also
++# understood by libraries such as libgnome.
++if [ -n "$GNOME2_DIR" ]; then
++    echo "Using GNOME2_DIR is deprecated in gnome-common."
++    echo "Please use GNOME2_PATH instead (for compatibility with other GNOME pieces)."
++    ACLOCAL_FLAGS="-I $GNOME2_DIR/share/aclocal $ACLOCAL_FLAGS"
++    LD_LIBRARY_PATH="$GNOME2_DIR/lib:$LD_LIBRARY_PATH"
++    PATH="$GNOME2_DIR/bin:$PATH"
++    export PATH
++    export LD_LIBRARY_PATH
++else
++    if [ -n "$GNOME2_PATH" ]; then
++        ACLOCAL_FLAGS="-I $GNOME2_PATH/share/aclocal $ACLOCAL_FLAGS"
++        LD_LIBRARY_PATH="$GNOME2_PATH/lib:$LD_LIBRARY_PATH"
++        PATH="$GNOME2_PATH/bin:$PATH"
++        export PATH
++        export LD_LIBRARY_PATH
++    fi
++fi
++
++# some terminal codes ...
++boldface="`tput bold 2>/dev/null`"
++normal="`tput sgr0 2>/dev/null`"
++printbold() {
++    echo $ECHO_N "$boldface"
++    echo "$@"
++    echo $ECHO_N "$normal"
++}    
++printerr() {
++    echo "$@" >&2
++}
++
++# Usage:
++#     compare_versions MIN_VERSION ACTUAL_VERSION
++# returns true if ACTUAL_VERSION >= MIN_VERSION
++compare_versions() {
++    ch_min_version=$1
++    ch_actual_version=$2
++    ch_status=0
++    IFS="${IFS=         }"; ch_save_IFS="$IFS"; IFS="."
++    set $ch_actual_version
++    for ch_min in $ch_min_version; do
++        ch_cur=`echo $1 | sed 's/[^0-9].*$//'`; shift # remove letter suffixes
++        if [ -z "$ch_min" ]; then break; fi
++        if [ -z "$ch_cur" ]; then ch_status=1; break; fi
++        if [ $ch_cur -gt $ch_min ]; then break; fi
++        if [ $ch_cur -lt $ch_min ]; then ch_status=1; break; fi
++    done
++    IFS="$ch_save_IFS"
++    return $ch_status
++}
++
++# Usage:
++#     version_check PACKAGE VARIABLE CHECKPROGS MIN_VERSION SOURCE
++# checks to see if the package is available
++version_check() {
++    vc_package=$1
++    vc_variable=$2
++    vc_checkprogs=$3
++    vc_min_version=$4
++    vc_source=$5
++    vc_status=1
++
++    vc_checkprog=`eval echo "\\$$vc_variable"`
++    if [ -n "$vc_checkprog" ]; then
++	printbold "using $vc_checkprog for $vc_package"
++	return 0
++    fi
++
++    printbold "checking for $vc_package >= $vc_min_version..."
++    for vc_checkprog in $vc_checkprogs; do
++	echo $ECHO_N "  testing $vc_checkprog... "
++	if $vc_checkprog --version < /dev/null > /dev/null 2>&1; then
++	    vc_actual_version=`$vc_checkprog --version | head -n 1 | \
++                               sed 's/^.*[ 	]\([0-9.]*[a-z]*\).*$/\1/'`
++	    if compare_versions $vc_min_version $vc_actual_version; then
++		echo "found $vc_actual_version"
++		# set variable
++		eval "$vc_variable=$vc_checkprog"
++		vc_status=0
++		break
++	    else
++		echo "too old (found version $vc_actual_version)"
++	    fi
++	else
++	    echo "not found."
++	fi
++    done
++    if [ "$vc_status" != 0 ]; then
++	printerr "***Error***: You must have $vc_package >= $vc_min_version installed"
++	printerr "  to build $PKG_NAME.  Download the appropriate package for"
++	printerr "  from your distribution or get the source tarball at"
++        printerr "    $vc_source"
++	printerr
++    fi
++    return $vc_status
++}
++
++# Usage:
++#     require_m4macro filename.m4
++# adds filename.m4 to the list of required macros
++require_m4macro() {
++    case "$REQUIRED_M4MACROS" in
++	$1\ * | *\ $1\ * | *\ $1) ;;
++	*) REQUIRED_M4MACROS="$REQUIRED_M4MACROS $1" ;;
++    esac
++}
++
++forbid_m4macro() {
++    case "$FORBIDDEN_M4MACROS" in
++	$1\ * | *\ $1\ * | *\ $1) ;;
++	*) FORBIDDEN_M4MACROS="$FORBIDDEN_M4MACROS $1" ;;
++    esac
++}
++
++# Usage:
++#     check_m4macros
++# Checks that all the requested macro files are in the aclocal macro path
++# Uses REQUIRED_M4MACROS and ACLOCAL variables.
++check_m4macros() {
++    # construct list of macro directories
++    cm_macrodirs="`$ACLOCAL --print-ac-dir`"
++    set - $ACLOCAL_FLAGS
++    while [ $# -gt 0 ]; do
++	if [ "$1" = "-I" ]; then
++	    cm_macrodirs="$cm_macrodirs $2"
++	    shift
++	fi
++	shift
++    done
++
++    cm_status=0
++    if [ -n "$REQUIRED_M4MACROS" ]; then
++	printbold "Checking for required M4 macros..."
++	# check that each macro file is in one of the macro dirs
++	for cm_macro in $REQUIRED_M4MACROS; do
++	    cm_macrofound=false
++	    for cm_dir in $cm_macrodirs; do
++		if [ -f "$cm_dir/$cm_macro" ]; then
++		    cm_macrofound=true
++		    break
++		fi
++		# The macro dir in Cygwin environments may contain a file
++		# called dirlist containing other directories to look in.
++		if [ -f "$cm_dir/dirlist" ]; then
++		    for cm_otherdir in `cat $cm_dir/dirlist`; do
++			if [ -f "$cm_otherdir/$cm_macro" ]; then
++			    cm_macrofound=true
++		            break
++			fi
++		    done
++		fi
++	    done
++	    if $cm_macrofound; then
++		:
++	    else
++		printerr "  $cm_macro not found"
++		cm_status=1
++	    fi
++	done
++    fi
++    if [ -n "$FORBIDDEN_M4MACROS" ]; then
++	printbold "Checking for forbidden M4 macros..."
++	# check that each macro file is in one of the macro dirs
++	for cm_macro in $FORBIDDEN_M4MACROS; do
++	    cm_macrofound=false
++	    for cm_dir in $cm_macrodirs; do
++		if [ -f "$cm_dir/$cm_macro" ]; then
++		    cm_macrofound=true
++		    break
++		fi
++	    done
++	    if $cm_macrofound; then
++		printerr "  $cm_macro found (should be cleared from macros dir)"
++		cm_status=1
++	    fi
++	done
++    fi
++    if [ "$cm_status" != 0 ]; then
++	printerr "***Error***: some autoconf macros required to build $PKG_NAME"
++	printerr "  were not found in your aclocal path, or some forbidden"
++	printerr "  macros were found.  Perhaps you need to adjust your"
++	printerr "  ACLOCAL_PATH?"
++	printerr
++    fi
++    return $cm_status
++}
++
++# try to catch the case where the macros2/ directory hasn't been cleared out.
++forbid_m4macro gnome-cxx-check.m4
++
++want_libtool=false
++want_gettext=false
++want_glib_gettext=false
++want_intltool=false
++want_pkg_config=false
++want_gtk_doc=false
++
++configure_files="`find $srcdir -name '{arch}' -prune -o -name configure.ac -print -o -name configure.in -print`"
++for configure_ac in $configure_files; do
++    if grep "^A[CM]_PROG_LIBTOOL" $configure_ac >/dev/null; then
++	want_libtool=true
++    fi
++    if grep "^AM_GNU_GETTEXT" $configure_ac >/dev/null; then
++	want_gettext=true
++    fi
++    if grep "^AM_GLIB_GNU_GETTEXT" $configure_ac >/dev/null; then
++	want_glib_gettext=true
++    fi
++    if grep "^AC_PROG_INTLTOOL" $configure_ac >/dev/null; then
++	want_intltool=true
++    fi
++    if grep "^PKG_CHECK_MODULES" $configure_ac >/dev/null; then
++	want_pkg_config=true
++    fi
++    if grep "^GTK_DOC_CHECK" $configure_ac >/dev/null; then
++	want_gtk_doc=true
++    fi
++done
++
++DIE=0
++
++#tell Mandrake autoconf wrapper we want autoconf 2.5x, not 2.13
++WANT_AUTOCONF_2_5=1
++export WANT_AUTOCONF_2_5
++version_check autoconf AUTOCONF 'autoconf2.50 autoconf autoconf-2.53' $REQUIRED_AUTOCONF_VERSION \
++    "http://ftp.gnu.org/pub/gnu/autoconf/autoconf-$REQUIRED_AUTOCONF_VERSION.tar.gz" || DIE=1
++AUTOHEADER=`echo $AUTOCONF | sed s/autoconf/autoheader/`
++
++case $REQUIRED_AUTOMAKE_VERSION in
++    1.4*) automake_progs="automake-1.4" ;;
++    1.5*) automake_progs="automake-1.5 automake-1.6 automake-1.7 automake-1.8" ;;
++    1.6*) automake_progs="automake-1.6 automake-1.7 automake-1.8" ;;
++    1.7*) automake_progs="automake-1.7 automake-1.8" ;;
++    1.8*) automake_progs="automake-1.8" ;;
++esac
++version_check automake AUTOMAKE "$automake_progs" $REQUIRED_AUTOMAKE_VERSION \
++    "http://ftp.gnu.org/pub/gnu/automake/automake-$REQUIRED_AUTOMAKE_VERSION.tar.gz" || DIE=1
++ACLOCAL=`echo $AUTOMAKE | sed s/automake/aclocal/`
++
++# We need to do this for the craaaaaaazy mkinstalldirs usage of glib-gettext
++AUTOMAKE_VERSION=`echo $AUTOMAKE | sed s/automake-//`
++ACLOCAL_DIR=`$ACLOCAL --print-ac-dir`
++AUTOMAKE_DIR=`echo $ACLOCAL_DIR | sed s/aclocal/automake-$AUTOMAKE_VERSION/`
++
++if $want_libtool; then
++    version_check libtool LIBTOOLIZE libtoolize $REQUIRED_LIBTOOL_VERSION \
++        "http://ftp.gnu.org/pub/gnu/libtool/libtool-$REQUIRED_LIBTOOL_VERSION.tar.gz" || DIE=1
++    require_m4macro libtool.m4
++fi
++
++if $want_gettext; then
++    version_check gettext GETTEXTIZE gettextize $REQUIRED_GETTEXT_VERSION \
++        "http://ftp.gnu.org/pub/gnu/gettext/gettext-$REQUIRED_GETTEXT_VERSION.tar.gz" || DIE=1
++    require_m4macro gettext.m4
++fi
++
++if $want_glib_gettext; then
++    version_check glib-gettext GLIB_GETTEXTIZE glib-gettextize $REQUIRED_GLIB_GETTEXT_VERSION \
++        "ftp://ftp.gtk.org/pub/gtk/v2.2/glib-$REQUIRED_GLIB_GETTEXT_VERSION.tar.gz" || DIE=1
++    require_m4macro glib-gettext.m4
++fi
++
++if $want_intltool; then
++    version_check intltool INTLTOOLIZE intltoolize $REQUIRED_INTLTOOL_VERSION \
++        "http://ftp.gnome.org/pub/GNOME/sources/intltool/" || DIE=1
++    require_m4macro intltool.m4
++fi
++
++if $want_pkg_config; then
++    version_check pkg-config PKG_CONFIG pkg-config $REQUIRED_PKG_CONFIG_VERSION \
++        "'http://www.freedesktop.org/software/pkgconfig/releases/pkgconfig-$REQUIRED_PKG_CONFIG_VERSION.tar.gz" || DIE=1
++    require_m4macro pkg.m4
++fi
++
++if $want_gtk_doc; then
++    version_check gtk-doc GTKDOCIZE gtkdocize $REQUIRED_GTK_DOC_VERSION \
++        "http://ftp.gnome.org/pub/GNOME/sources/gtk-doc/" || DIE=1
++    require_m4macro gtk-doc.m4
++fi
++
++if [ "x$USE_COMMON_DOC_BUILD" = "xyes" ]; then
++    version_check gnome-common DOC_COMMON gnome-doc-common \
++        $REQUIRED_DOC_COMMON_VERSION " " || DIE=1
++fi
++
++check_m4macros || DIE=1
++
++if [ "$DIE" -eq 1 ]; then
++  exit 1
++fi
++
++if test -z "$*"; then
++  printerr "**Warning**: I am going to run \`configure' with no arguments."
++  printerr "If you wish to pass any to it, please specify them on the"
++  printerr \`$0\'" command line."
++  printerr
++fi
++
++topdir=`pwd`
++for configure_ac in $configure_files; do 
++    dirname=`dirname $configure_ac`
++    basename=`basename $configure_ac`
++    if test -f $dirname/NO-AUTO-GEN; then
++	echo skipping $dirname -- flagged as no auto-gen
++    else
++	printbold "Processing $configure_ac"
++	cd $dirname
++
++        # Note that the order these tools are called should match what
++        # autoconf's "autoupdate" package does.  See bug 138584 for
++        # details.
++
++        # programs that might install new macros get run before aclocal
++	if grep "^A[CM]_PROG_LIBTOOL" $basename >/dev/null; then
++	    printbold "Running $LIBTOOLIZE..."
++	    $LIBTOOLIZE --force || exit 1
++	fi
++
++	if grep "^AM_GLIB_GNU_GETTEXT" $basename >/dev/null; then
++	    printbold "Running $GLIB_GETTEXTIZE... Ignore non-fatal messages."
++	    echo "no" | $GLIB_GETTEXTIZE --force --copy || exit 1
++	    # This is to copy in mkinstalldirs for glib-gettext
++	    if [ -x $AUTOMAKE_DIR/mkinstalldirs ]; then
++		echo "  copying mkinstalldirs... "
++		cp -f $AUTOMAKE_DIR/mkinstalldirs $dirname
++	    fi
++	elif grep "^AM_GNU_GETTEXT" $basename >/dev/null; then
++	   if grep "^AM_GNU_GETTEXT_VERSION" $basename > /dev/null; then
++	   	printbold "Running autopoint..."
++		autopoint --force || exit 1
++	   else
++	    	printbold "Running $GETTEXTIZE... Ignore non-fatal messages."
++	    	echo "no" | $GETTEXTIZE --force --copy || exit 1
++	   fi
++	fi
++
++	if grep "^AC_PROG_INTLTOOL" $basename >/dev/null; then
++	    printbold "Running $INTLTOOLIZE..."
++	    $INTLTOOLIZE --force --automake || exit 1
++	fi
++	if grep "^GTK_DOC_CHECK" $basename >/dev/null; then
++	    printbold "Running $GTKDOCIZE..."
++	    $GTKDOCIZE || exit 1
++	fi
++
++	if [ "x$USE_COMMON_DOC_BUILD" = "xyes" ]; then
++	    printbold "Running gnome-doc-common..."
++	    gnome-doc-common --copy || exit 1
++	fi
++
++        # Now run aclocal to pull in any additional macros needed
++	aclocalinclude="$ACLOCAL_FLAGS"
++	printbold "Running $ACLOCAL..."
++	$ACLOCAL $aclocalinclude || exit 1
++
++	if grep "GNOME_AUTOGEN_OBSOLETE" aclocal.m4 >/dev/null; then
++	    printerr "*** obsolete gnome macros were used in $configure_ac"
++	fi
++
++	# Now that all the macros are sorted, run autoconf and autoheader ...
++	printbold "Running $AUTOCONF..."
++	$AUTOCONF || exit 1
++	if grep "^A[CM]_CONFIG_HEADER" $basename >/dev/null; then
++	    printbold "Running $AUTOHEADER..."
++	    $AUTOHEADER || exit 1
++	    # this prevents automake from thinking config.h.in is out of
++	    # date, since autoheader doesn't touch the file if it doesn't
++	    # change.
++	    test -f config.h.in && touch config.h.in
++	fi
++
++	# Finally, run automake to create the makefiles ...
++	printbold "Running $AUTOMAKE..."
++	$AUTOMAKE --gnu --add-missing || exit 1
++
++	cd "$topdir"
++    fi
++done
++
++conf_flags="--enable-maintainer-mode"
++
++if test x$NOCONFIGURE = x; then
++    printbold Running $srcdir/configure $conf_flags "$@" ...
++    $srcdir/configure $conf_flags "$@" \
++	&& echo Now type \`make\' to compile $PKG_NAME || exit 1
++else
++    echo Skipping configure process.
++fi
+diff -u -r -N a/m4/python.m4 b/m4/python.m4
+--- m4/python.m4	1969-12-31 16:00:00.000000000 -0800
++++ m4/python.m4	2007-07-29 10:26:10.000000000 -0700
+@@ -0,0 +1,83 @@
++## this one is commonly used with AM_PATH_PYTHONDIR ...
++dnl AM_CHECK_PYMOD(MODNAME [,SYMBOL [,ACTION-IF-FOUND [,ACTION-IF-NOT-FOUND]]])
++dnl Check if a module containing a given symbol is visible to python.
++AC_DEFUN(AM_CHECK_PYMOD,
++[AC_REQUIRE([AM_PATH_PYTHON])
++py_mod_var=`echo $1['_']$2 | sed 'y%./+-%__p_%'`
++AC_MSG_CHECKING(for ifelse([$2],[],,[$2 in ])python module $1)
++AC_CACHE_VAL(py_cv_mod_$py_mod_var, [
++ifelse([$2],[], [prog="
++import sys
++try:
++        import $1
++except ImportError:
++        sys.exit(1)
++except:
++        sys.exit(0)
++sys.exit(0)"], [prog="
++import $1
++$1.$2"])
++if $PYTHON -c "$prog" 1>&AC_FD_CC 2>&AC_FD_CC
++  then
++    eval "py_cv_mod_$py_mod_var=yes"
++  else
++    eval "py_cv_mod_$py_mod_var=no"
++  fi
++])
++py_val=`eval "echo \`echo '$py_cv_mod_'$py_mod_var\`"`
++if test "x$py_val" != xno; then
++  AC_MSG_RESULT(yes)
++  ifelse([$3], [],, [$3
++])dnl
++else
++  AC_MSG_RESULT(no)
++  ifelse([$4], [],, [$4
++])dnl
++fi
++])
++
++dnl a macro to check for ability to create python extensions
++dnl  AM_CHECK_PYTHON_HEADERS([ACTION-IF-POSSIBLE], [ACTION-IF-NOT-POSSIBLE])
++dnl function also defines PYTHON_INCLUDES
++AC_DEFUN([AM_CHECK_PYTHON_HEADERS],
++[AC_REQUIRE([AM_PATH_PYTHON])
++AC_MSG_CHECKING(for headers required to compile python extensions)
++dnl deduce PYTHON_INCLUDES
++py_prefix=`$PYTHON -c "import sys; print sys.prefix"`
++py_exec_prefix=`$PYTHON -c "import sys; print sys.exec_prefix"`
++PYTHON_INCLUDES="-I${py_prefix}/include/python${PYTHON_VERSION}"
++if test "$py_prefix" != "$py_exec_prefix"; then
++  PYTHON_INCLUDES="$PYTHON_INCLUDES -I${py_exec_prefix}/include/python${PYTHON_VERSION}"
++fi
++AC_SUBST(PYTHON_INCLUDES)
++dnl check if the headers exist:
++save_CPPFLAGS="$CPPFLAGS"
++CPPFLAGS="$CPPFLAGS $PYTHON_INCLUDES"
++AC_TRY_CPP([#include <Python.h>],dnl
++[AC_MSG_RESULT(found)
++$1],dnl
++[AC_MSG_RESULT(not found)
++$2])
++CPPFLAGS="$save_CPPFLAGS"
++])
++
++dnl a macro to check for ability to embed python
++dnl  AM_CHECK_PYTHON_LIBS([ACTION-IF-POSSIBLE], [ACTION-IF-NOT-POSSIBLE])
++dnl function also defines PYTHON_LIBS
++AC_DEFUN([AM_CHECK_PYTHON_LIBS],
++[AC_REQUIRE([AM_CHECK_PYTHON_HEADERS])
++AC_MSG_CHECKING(for libraries required to embed python)
++dnl deduce PYTHON_LIBS
++py_exec_prefix=`$PYTHON -c "import sys; print sys.exec_prefix"`
++PYTHON_LIBS="-L${py_prefix}/lib -lpython${PYTHON_VERSION}"
++PYTHON_LIB_LOC="${py_prefix}/lib" 
++AC_SUBST(PYTHON_LIBS)
++AC_SUBST(PYTHON_LIB_LOC)
++dnl check if the headers exist:
++save_LIBS="$LIBS"
++LIBS="$LIBS $PYTHON_LIBS"
++AC_TRY_LINK_FUNC(Py_Initialize, dnl
++         [LIBS="$save_LIBS"; AC_MSG_RESULT(yes); $1], dnl
++         [LIBS="$save_LIBS"; AC_MSG_RESULT(no); $2])
++
++])
+Index: configure.in
+===================================================================
+--- configure.in	(revision 40)
++++ configure.in	(revision 44)
+@@ -80,7 +80,7 @@
+ 		  if test -f $PY_PREFIX/include/python$PY_VERSION/Python.h; then
+ 			  AC_MSG_RESULT(yes)
+ 			  PY_LIBS="python$PY_VERSION"
+-			  PY_LIB_LOC="-L$PY_EXEC_PREFIX/lib/python$PY_VERSION/config"
++			  PY_LIB_LOC="$PY_EXEC_PREFIX/lib"
+ 			  PY_CFLAGS="-I$PY_PREFIX/include/python$PY_VERSION"
+ 			  PY_MAKEFILE="$PY_EXEC_PREFIX/lib/python$PY_VERSION/config/Makefile"
+ 			  PY_LOCALMODLIBS=`sed -n -e 's/^LOCALMODLIBS=\(.*\)/\1/p' $PY_MAKEFILE`
+Index: ChangeLog
+===================================================================
+--- ChangeLog	(revision 40)
++++ ChangeLog	(revision 44)
+@@ -1,3 +1,42 @@
++2006-02-19  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
++
++	* configure.in: Fix PY_LIB_LOC to point to $PY_EXEC_PREFIX/lib,
++	which is where a normal (i.e. not distribution patched) python
++	installation puts the shared library.
++
++	* src/nautilus-python.c (nautilus_python_init_python): Use
++	PY_LIB_LOC here to open the correct python library (for cases of
++	prefix != /usr).
++
++	* src/Makefile.am (PYTHON_LIBS): Use PY_LIB_LOC here.
++
++	* configure.in: Remove -L from $PY_LIB_LOC.
++
++	* src/nautilus-python.c (np_init_pygobject): Add a missing
++	PyErr_Print(); for the case when _PyGObbject_API is not found.
++	(np_init_pygtk): idem.
++
++2006-02-18  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
++
++	* src/nautilus-python.c (np_init_pygnomevfs): Copy-paste of
++	init_pygnomevfs from pygnomevfs.h, but changing error handling to
++	avoid Py_FatalError, so we don't crash nautilus if gnomevfs module
++	is missing.
++	(np_init_pygnomevfs): Convert macro to inline function, make it
++	return TRUE/FALSE on success/failure.  Update rest of code to
++	reflect these changes.
++	(np_init_pygtk): idem.
++	(np_init_pygobject): idem.
++	(nautilus_python_init_python): Call np_init_pygnomevfs instead of
++	init_pygnomevfs.
++
++	* src/nautilus-python.h: Moved np_init_pygobject and
++	np_init_pygtk to src/nautilus-python.c.
++
++	* src/nautilus-python.c: Refactor to initialize nautilus-python on
++	demand: python/pygtk/pygnomevfs are not initialized if no python
++	extension is actually found.
++
+ === 0.4.3 ===
+ 2006-02-15  Gustavo J. A. M. Carneiro  <gjc@gnome.org>
+ 
+Index: src/nautilus-python.c
+===================================================================
+--- src/nautilus-python.c	(revision 40)
++++ src/nautilus-python.c	(revision 44)
+@@ -37,10 +37,77 @@
+ static const guint nautilus_python_ndebug_keys = sizeof (nautilus_python_debug_keys) / sizeof (GDebugKey);
+ NautilusPythonDebug nautilus_python_debug;
+ 
++static gboolean nautilus_python_init_python(void);
++
+ static GArray *all_types = NULL;
+ 
+-#define ENTRY_POINT "nautilus_extension_types"
+ 
++static inline gboolean np_init_pygobject(void)
++{
++    PyObject *gobject = PyImport_ImportModule("gobject");
++    if (gobject != NULL) {
++        PyObject *mdict = PyModule_GetDict(gobject);
++        PyObject *cobject = PyDict_GetItemString(mdict, "_PyGObject_API");
++        if (PyCObject_Check(cobject))
++            _PyGObject_API = (struct _PyGObject_Functions *)PyCObject_AsVoidPtr(cobject);
++        else {
++            PyErr_SetString(PyExc_RuntimeError,
++                            "could not find _PyGObject_API object");
++			PyErr_Print();
++			return FALSE;
++        }
++    } else {
++        PyErr_Print();
++        g_warning("could not import gobject");
++        return FALSE;
++    }
++	return TRUE;
++}
++
++static inline gboolean np_init_pygtk(void)
++{
++    PyObject *pygtk = PyImport_ImportModule("gtk._gtk");
++    if (pygtk != NULL) {
++		PyObject *module_dict = PyModule_GetDict(pygtk);
++		PyObject *cobject = PyDict_GetItemString(module_dict, "_PyGtk_API");
++		if (PyCObject_Check(cobject))
++			_PyGtk_API = (struct _PyGtk_FunctionStruct*)
++				PyCObject_AsVoidPtr(cobject);
++		else {
++            PyErr_SetString(PyExc_RuntimeError,
++                            "could not find _PyGtk_API object");
++			PyErr_Print();
++			return FALSE;
++        }
++    } else {
++        PyErr_Print();
++        g_warning("could not import gtk._gtk");
++        return FALSE;
++    }
++	return TRUE;
++}
++
++static inline gboolean np_init_pygnomevfs(void)
++{
++    PyObject *module = PyImport_ImportModule("gnomevfs");
++    if (module != NULL) {
++        PyObject *mdict = PyModule_GetDict(module);
++        PyObject *cobject = PyDict_GetItemString(mdict, "_PyGnomeVFS_API");
++        if (PyCObject_Check(cobject))
++            _PyGnomeVFS_API = (struct _PyGnomeVFS_Functions *)PyCObject_AsVoidPtr(cobject);
++        else {
++	         g_warning("could not find _PyGnomeVFS_API object in the gnomevfs module");
++			 return FALSE;
++        }
++    } else {
++        PyErr_Print();
++        g_warning("could not import gnomevfs");
++		return FALSE;
++    }
++	return TRUE;
++}
++
++
+ static void
+ nautilus_python_load_file(GTypeModule *type_module, const gchar *filename)
+ {
+@@ -88,7 +155,7 @@
+ {
+ 	GDir *dir;
+ 	const char *name;
+-	PyObject *sys_path, *py_path;
++	gboolean initialized = FALSE;
+ 
+ 	debug_enter_args("dirname=%s", dirname);
+ 	
+@@ -96,11 +163,6 @@
+ 	if (!dir)
+ 		return;
+ 
+-	  /* sys.path.insert(0, dirname) */
+-	sys_path = PySys_GetObject("path");
+-	py_path = PyString_FromString(dirname);
+-	PyList_Insert(sys_path, 0, py_path);
+-	Py_DECREF(py_path);
+ 			
+ 	while ((name = g_dir_read_name(dir))) {
+ 		if (g_str_has_suffix(name, ".py")) {
+@@ -110,48 +172,88 @@
+ 			len = strlen(name) - 3;
+ 			modulename = g_new0(char, len + 1 );
+ 			strncpy(modulename, name, len);
++
++			if (!initialized) {
++				PyObject *sys_path, *py_path;
++				  /* n-p python part is initialized on demand (or not
++				   * at all if no extensions are found) */
++				if (!nautilus_python_init_python()) {
++					g_warning("nautilus_python_init_python failed");
++					goto exit;
++				}
++				  /* sys.path.insert(0, dirname) */
++				sys_path = PySys_GetObject("path");
++				py_path = PyString_FromString(dirname);
++				PyList_Insert(sys_path, 0, py_path);
++				Py_DECREF(py_path);
++			}
+ 			nautilus_python_load_file(module, modulename);
+ 		}
+ 	}
++exit:
+ 	g_dir_close(dir);
+ }
+ 
+-gboolean
+-nautilus_python_init_python (gchar **user_extensions_dir)
++static gboolean
++nautilus_python_init_python (void)
+ {
+ 	PyObject *pygtk, *mdict, *require;
+ 	PyObject *sys_path, *tmp, *nautilus, *gtk, *pygtk_version, *pygtk_required_version;
+ 	GModule *libpython;
+-	char *home_dir;
+ 	char *argv[] = { "nautilus", NULL };
+ 
+ 	if (Py_IsInitialized())
+ 		return TRUE;
+ 
+-	libpython = g_module_open("libpython" PYTHON_VERSION "." G_MODULE_SUFFIX, 0);
++  	debug("g_module_open " PY_LIB_LOC "/libpython" PYTHON_VERSION "." G_MODULE_SUFFIX);
++	libpython = g_module_open(PY_LIB_LOC "/libpython" PYTHON_VERSION "." G_MODULE_SUFFIX, 0);
+ 	if (!libpython)
+ 		g_warning("g_module_open libpython failed: %s", g_module_error());
+-
++	debug("Py_Initialize");
+ 	Py_Initialize();
++	if (PyErr_Occurred()) {
++		PyErr_Print();
++		return FALSE;
++	}
++	
++	debug("PySys_SetArgv");
+ 	PySys_SetArgv(1, argv);
++	if (PyErr_Occurred()) {
++		PyErr_Print();
++		return FALSE;
++	}
+ 
+ 	/* pygtk.require("2.0") */
++	debug("pygtk.require(\"2.0\")");
+ 	pygtk = PyImport_ImportModule("pygtk");
++	if (!pygtk) {
++		PyErr_Print();
++		return FALSE;
++	}
+ 	mdict = PyModule_GetDict(pygtk);
+ 	require = PyDict_GetItemString(mdict, "require");
+ 	PyObject_CallObject(require, Py_BuildValue("(S)", PyString_FromString("2.0")));
++	if (PyErr_Occurred()) {
++		PyErr_Print();
++		return FALSE;
++	}
+ 
+ 	/* import gobject */
+   	debug("init_pygobject");
+-	np_init_pygobject();
+-
++	if (!np_init_pygobject()) {
++		g_warning("pygobject initialization failed");
++		return FALSE;
++	}
+ 	/* import gtk */
+ 	debug("init_pygtk");
+-	np_init_pygtk();
+-
++	if (!np_init_pygtk()) {
++		g_warning("pygtk initialization failed");
++		return FALSE;
++	}
+ 	/* import gnomevfs */
+ 	debug("init_gnomevfs");
+-	init_pygnomevfs();
++	if (!np_init_pygnomevfs())
++		return FALSE;
+ 
+ 	/* gobject.threads_init() */
+     debug("pyg_enable_threads");
+@@ -175,9 +277,6 @@
+ 	/* sys.path.insert(., ...) */
+ 	debug("sys.path.insert(0, ...)");
+ 	sys_path = PySys_GetObject("path");
+-	home_dir = g_strdup_printf("%s/.nautilus/python-extensions/",
+-							   g_get_home_dir());
+-	*user_extensions_dir = home_dir;
+ 	PyList_Insert(sys_path, 0,
+ 				  (tmp = PyString_FromString(NAUTILUS_LIBDIR "/nautilus-python")));
+ 	Py_DECREF(tmp);
+@@ -232,10 +331,9 @@
+ 
+ 	all_types = g_array_new(FALSE, FALSE, sizeof(GType));
+ 
+-	if (!nautilus_python_init_python(&user_extensions_dir))
+-		return;
+-		
+ 	nautilus_python_load_dir(module, NAUTILUS_LIBDIR "/nautilus/extensions-1.0/python");
++	user_extensions_dir = g_strdup_printf("%s/.nautilus/python-extensions/",
++										  g_get_home_dir());
+ 	nautilus_python_load_dir(module, user_extensions_dir);
+ 	g_free(user_extensions_dir);
+ }
+@@ -253,6 +351,7 @@
+ 
+ 	debug("Shutting down nautilus-python extension.");
+ #endif
++	g_array_free(all_types, TRUE);
+ }
+ 
+ void 
+Index: src/Makefile.am
+===================================================================
+--- src/Makefile.am	(revision 40)
++++ src/Makefile.am	(revision 44)
+@@ -7,11 +7,12 @@
+ 	$(DISABLE_DEPRECATED_CFLAGS)			\
+ 	$(NAUTILUS_PYTHON_CFLAGS)			\
+ 	-DPYTHON_VERSION=\"$(PYTHON_VERSION)\"		\
++	-DPY_LIB_LOC="\"$(PY_LIB_LOC)\""		\
+ 	$(PY_CFLAGS)
+ 
+-PYTHON_LIBS = 			\
+-	-l$(PY_LIBS)		\
+-	$(PY_OTHER_LIBS)	\
++PYTHON_LIBS =					\
++	-L$(PY_LIB_LOC) -l$(PY_LIBS)		\
++	$(PY_OTHER_LIBS)			\
+ 	$(PY_EXTRA_LIBS)
+ 
+ nautilus_extensiondir=$(NAUTILUS_LIBDIR)/nautilus/extensions-1.0
+Index: src/nautilus-python.h
+===================================================================
+--- src/nautilus-python.h	(revision 40)
++++ src/nautilus-python.h	(revision 44)
+@@ -39,46 +39,7 @@
+ #define debug_enter_args(x, y) { if (nautilus_python_debug & NAUTILUS_PYTHON_DEBUG_MISC) \
+                                      g_printf("%s: entered " x "\n", __FUNCTION__, y); }
+ 
+-/* Macros from PyGTK, changed to return FALSE instead of nothing */
+-#define np_init_pygobject() { \
+-    PyObject *gobject = PyImport_ImportModule("gobject"); \
+-    if (gobject != NULL) { \
+-        PyObject *mdict = PyModule_GetDict(gobject); \
+-        PyObject *cobject = PyDict_GetItemString(mdict, "_PyGObject_API"); \
+-        if (PyCObject_Check(cobject)) \
+-            _PyGObject_API = (struct _PyGObject_Functions *)PyCObject_AsVoidPtr(cobject); \
+-        else { \
+-            PyErr_SetString(PyExc_RuntimeError, \
+-                            "could not find _PyGObject_API object"); \
+-	    return FALSE; \
+-        } \
+-    } else { \
+-        PyErr_Print(); \
+-        g_warning("could not import gobject"); \
+-        return FALSE; \
+-    } \
+-}
+ 
+-#define np_init_pygtk() { \
+-    PyObject *pygtk = PyImport_ImportModule("gtk._gtk"); \
+-    if (pygtk != NULL) { \
+-	PyObject *module_dict = PyModule_GetDict(pygtk); \
+-	PyObject *cobject = PyDict_GetItemString(module_dict, "_PyGtk_API"); \
+-	if (PyCObject_Check(cobject)) \
+-	    _PyGtk_API = (struct _PyGtk_FunctionStruct*) \
+-		PyCObject_AsVoidPtr(cobject); \
+-	else { \
+-            PyErr_SetString(PyExc_RuntimeError, \
+-                            "could not find _PyGtk_API object"); \
+-	    return FALSE; \
+-        } \
+-    } else { \
+-        PyErr_Print(); \
+-        g_warning("could not import gtk._gtk"); \
+-        return FALSE; \
+-    } \
+-}
+-
+ PyTypeObject *_PyNautilusColumn_Type;
+ #define PyNautilusColumn_Type (*_PyNautilusColumn_Type)
+ 

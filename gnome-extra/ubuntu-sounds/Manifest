@@ -1,0 +1,8 @@
+DIST ubuntu-sounds_0.5.tar.gz 2332500 RMD160 c7e51b11830255d586b67a5cf0fd8211fb68a89c SHA1 a1674867a3d0eb25c2425fb09263699bcae8be22 SHA256 5c023410a14ab7b4c61da167feb4be037b02f31ad4b11144f4acc316b12f7150
+EBUILD ubuntu-sounds-0.5.ebuild 687 RMD160 71de3ba71f7fe8c6ef45945d77bd2afc7e81138f SHA1 cb8f7e831a88421f9c025b45774d9578a4a3d97e SHA256 0d6bdc7759b19b956b07f0c1c63bbac8da93c203a0c83c9e69fa0d73f2c39782
+MD5 3f028139fa6d912ee2fb93b57a8b9596 ubuntu-sounds-0.5.ebuild 687
+RMD160 71de3ba71f7fe8c6ef45945d77bd2afc7e81138f ubuntu-sounds-0.5.ebuild 687
+SHA256 0d6bdc7759b19b956b07f0c1c63bbac8da93c203a0c83c9e69fa0d73f2c39782 ubuntu-sounds-0.5.ebuild 687
+MD5 e041b8b54daa1f3fda95cb4d59198073 files/digest-ubuntu-sounds-0.5 256
+RMD160 faa61419767a3708931d998d13981cf1e147be2b files/digest-ubuntu-sounds-0.5 256
+SHA256 de90606e8b718db31abc304fbeda34a0abb7a67b087774d707f0f2159db288b9 files/digest-ubuntu-sounds-0.5 256

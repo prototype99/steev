@@ -1,0 +1,23 @@
+# ChangeLog for sys-auth/pam_console
+# Copyright 1999-2006 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/sys-auth/pam_console/ChangeLog,v 1.4 2006/10/26 19:56:34 flameeyes Exp $
+
+  26 Oct 2006; Diego Pettenò <flameeyes@gentoo.org>
+  files/pam_console-configure.ac:
+  Check for bison so that it's used instead of yacc.
+
+  26 Oct 2006; Diego Pettenò <flameeyes@gentoo.org>
+  pam_console-0.99.6.2.3.6.ebuild:
+  Force -j1, does not build parallel (yes it's just a workaround).
+
+  25 Oct 2006; Diego Pettenò <flameeyes@gentoo.org>
+  pam_console-0.99.6.2.3.6.ebuild:
+  Fix typo, thanks Opfer.
+
+*pam_console-0.99.6.2.3.6 (24 Oct 2006)
+
+  24 Oct 2006; Diego Pettenò <flameeyes@gentoo.org>
+  +files/pam_console-configure.ac, +metadata.xml,
+  +pam_console-0.99.6.2.3.6.ebuild:
+  Add pam_console split ebuild. Untested, needs to be re-keyworded too.
+

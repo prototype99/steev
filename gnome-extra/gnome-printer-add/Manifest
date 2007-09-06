@@ -1,0 +1,8 @@
+DIST gnome-printer-add-1.0.2.tar.gz 70253 RMD160 6c5d56a9dfde4a23dc4eddf7c07be4ce599e0f2e SHA1 06bb6754e7d30223e1f5c90d64e5c032b7999cd6 SHA256 513706f05709beac268d8fbaf3ddc0e5cb66af3cf7388c510f0cf3da66d7e9e4
+EBUILD gnome-printer-add-1.0.2.ebuild 354 RMD160 18f2acaf83100706c13000168c1948c908a73a85 SHA1 f01769c3cfbcfa732ee90067c80938f328adc6c9 SHA256 641d55ba1c7002a6b4f7b4d224eb39e8f4f8502c5340bc6b6b2e1aa594bea420
+MD5 b55a29320e7b9d17f998021c257f7d92 gnome-printer-add-1.0.2.ebuild 354
+RMD160 18f2acaf83100706c13000168c1948c908a73a85 gnome-printer-add-1.0.2.ebuild 354
+SHA256 641d55ba1c7002a6b4f7b4d224eb39e8f4f8502c5340bc6b6b2e1aa594bea420 gnome-printer-add-1.0.2.ebuild 354
+MD5 1ed899ccd9a5428fc3cb71cdef9147aa files/digest-gnome-printer-add-1.0.2 268
+RMD160 f8612e884f6aa712d1621aa51b4a4e17f3c3ba39 files/digest-gnome-printer-add-1.0.2 268
+SHA256 8c893ff0d5ebf2511d1ec8b1830ed2375563b03f8c3c02472f371498629f256c files/digest-gnome-printer-add-1.0.2 268

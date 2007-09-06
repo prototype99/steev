@@ -1,0 +1,32 @@
+diff -ruN NetworkManager/src/backends/NetworkManagerGentoo.c NetworkManager.modified/src/backends/NetworkManagerGentoo.c
+--- NetworkManager/src/backends/NetworkManagerGentoo.c	2007-08-14 18:02:06.000000000 -0500
++++ NetworkManager.modified/src/backends/NetworkManagerGentoo.c	2007-08-14 18:15:31.000000000 -0500
+@@ -30,14 +30,28 @@
+ #include <stdio.h>
+ #include <sys/types.h>
+ #include <signal.h>
++#include <arpa/inet.h>
+ 
+ #include <arpa/inet.h>
+ #include "NetworkManagerGeneric.h"
+ #include "NetworkManagerSystem.h"
+ #include "NetworkManagerUtils.h"
++#include "NetworkManagerMain.h"
+ #include "nm-device.h"
++#include "nm-ap-security.h"
++#include "nm-ap-security-private.h"
++#include "nm-ap-security-wep.h"
++#include "nm-ap-security-wpa-psk.h"
++#include "NetworkManagerAPList.h"
++#include "NetworkManagerPolicy.h"
++#include "cipher.h"
++#include "cipher-wep-ascii.h"
++#include "cipher-wep-hex.h"
++#include "cipher-wep-passphrase.h"
++#include "cipher-wpa-psk-passphrase.h"
+ #include "nm-device-802-3-ethernet.h"
+ #include "nm-device-802-11-wireless.h"
++#include "NetworkManagerDialup.h"
+ #include "nm-utils.h"
+ #include "shvar.h"
+ 

@@ -1,0 +1,12 @@
+AUX evolution-sharp-0.11.1-evo28.patch 1830 RMD160 6adbd5e1b472f00c27e71a8803a0d717427b531f SHA1 a471b1e52216cb5fe278804fa1d5b13c6205bf2d SHA256 cf682194264bad07d4b02575807068f651cb9d3793899ce78c6a92f1b405fddc
+MD5 64b895335e24dbde2cddc79a55b7b4e2 files/evolution-sharp-0.11.1-evo28.patch 1830
+RMD160 6adbd5e1b472f00c27e71a8803a0d717427b531f files/evolution-sharp-0.11.1-evo28.patch 1830
+SHA256 cf682194264bad07d4b02575807068f651cb9d3793899ce78c6a92f1b405fddc files/evolution-sharp-0.11.1-evo28.patch 1830
+DIST evolution-sharp-0.11.1.tar.bz2 305490 RMD160 fe427f6785c6715d5ff49ce53878bef813d883f4 SHA1 3f2b46fcfac5dd124146995a8a00708efcdda248 SHA256 ad519f0f3b02f2bba671d95c77bf8862a1b283cf4bafda252e031d147b153cf1
+EBUILD evolution-sharp-0.11.1-r1.ebuild 838 RMD160 d67e0f206a529ae6362e8faf290d01fad41c2a89 SHA1 3a25aef1050fa4d85d9156db460142b62ca2ad48 SHA256 2199e91cc9f4fc13aba7d419c7c49b829dba1abb1eaac9a9ee04ae49b7572f1c
+MD5 797a1e54fd0b29c9e79d5eccb10914ec evolution-sharp-0.11.1-r1.ebuild 838
+RMD160 d67e0f206a529ae6362e8faf290d01fad41c2a89 evolution-sharp-0.11.1-r1.ebuild 838
+SHA256 2199e91cc9f4fc13aba7d419c7c49b829dba1abb1eaac9a9ee04ae49b7572f1c evolution-sharp-0.11.1-r1.ebuild 838
+MD5 f92d8be83339bfd90bca5547d165b649 files/digest-evolution-sharp-0.11.1-r1 271
+RMD160 977a06dcbaa3eb816a003e1fdbe8bb2fe76cc4bf files/digest-evolution-sharp-0.11.1-r1 271
+SHA256 e86223a172a30f963feea2eb15581988ded145c2e603e2b3da15a1d376c564e7 files/digest-evolution-sharp-0.11.1-r1 271

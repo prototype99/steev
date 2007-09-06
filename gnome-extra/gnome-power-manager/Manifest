@@ -1,0 +1,8 @@
+DIST gnome-power-manager-2.15.90.tar.bz2 1270106 RMD160 a9dcf9aaa6cec56502a9daf18f08937f562ef6f1 SHA1 50cedcb55203123c4c3efd359e454ab9de58647b SHA256 c7580d7baed0399aea650aff35a09f5bdcc162a82de0df5575cbcbe734ca992e
+EBUILD gnome-power-manager-2.15.90.ebuild 1035 RMD160 2bf910de9ae95f91d36cb48556431106f5d944c4 SHA1 3df9ab2dc83d1cd0014244642dd3e9461ceb7dfc SHA256 2533f8fa7b7e2cee75ad00d1bba5e0976ad52f3a5e947d6a3eab46aaf4c4ca24
+MD5 cf128cdf86ed39fc3f889f354443fe17 gnome-power-manager-2.15.90.ebuild 1035
+RMD160 2bf910de9ae95f91d36cb48556431106f5d944c4 gnome-power-manager-2.15.90.ebuild 1035
+SHA256 2533f8fa7b7e2cee75ad00d1bba5e0976ad52f3a5e947d6a3eab46aaf4c4ca24 gnome-power-manager-2.15.90.ebuild 1035
+MD5 8a4cc1672e1723f478099dc403c19227 files/digest-gnome-power-manager-2.15.90 289
+RMD160 7fa0c60e6fbb7268c46d866544600a36cc5cefcb files/digest-gnome-power-manager-2.15.90 289
+SHA256 4a6dd0d6bdec8e9623d4844b5a476b71d3113ba1b3e0421cdd46a8e2bb72a6b6 files/digest-gnome-power-manager-2.15.90 289

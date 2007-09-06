@@ -1,0 +1,12 @@
+diff -ruN rtl8180-0.22_pre20070210.orig/rtl_ieee80211_rx.c rtl8180-0.22_pre20070210/rtl_ieee80211_rx.c
+--- rtl8180-0.22_pre20070210.orig/rtl_ieee80211_rx.c	2007-08-01 14:21:17.000000000 -0500
++++ rtl8180-0.22_pre20070210/rtl_ieee80211_rx.c	2007-08-01 14:21:46.000000000 -0500
+@@ -52,7 +52,7 @@
+ 	u16 fc = le16_to_cpu(hdr->frame_ctl);
+ 
+ 	skb->dev = ieee->dev;
+-	skb->mac.raw = skb->data;
++   skb_reset_mac_header(skb);
+ 	skb_pull(skb, rtl_ieee80211_get_hdrlen(fc));
+ 	skb->pkt_type = PACKET_OTHERHOST;
+ 	skb->protocol = __constant_htons(ETH_P_80211_RAW);
