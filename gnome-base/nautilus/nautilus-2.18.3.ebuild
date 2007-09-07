@@ -31,7 +31,7 @@ RDEPEND=">=media-libs/libart_lgpl-2.3.10
 	>=media-libs/libexif-0.5.12
 	>=gnome-base/gconf-2
 	beagle? ( >=app-misc/beagle-0.0.12 )
-	x86? ( tracker? ( >=app-misc/tracker-0.0.1 ) )
+	tracker? ( >=app-misc/tracker-0.0.1 )
 	x11-libs/libICE
 	x11-libs/libSM
 	x11-proto/xproto
