@@ -1,0 +1,210 @@
+diff -r -u -p nautilus-2.18.1/libnautilus-private/nautilus-dnd.h nautilus-2.18.1-attila/libnautilus-private/nautilus-dnd.h
+--- nautilus-2.18.1/libnautilus-private/nautilus-dnd.h	2007-04-10 14:06:07.000000000 +0200
++++ nautilus-2.18.1-attila/libnautilus-private/nautilus-dnd.h	2007-09-07 04:01:46.000000000 +0200
+@@ -38,6 +38,7 @@
+ #define NAUTILUS_ICON_DND_KEYWORD_TYPE          "property/keyword"
+ #define NAUTILUS_ICON_DND_RESET_BACKGROUND_TYPE "x-special/gnome-reset-background"
+ #define NAUTILUS_ICON_DND_ROOTWINDOW_DROP_TYPE  "application/x-rootwindow-drop"
++#define NAUTILUS_ICON_DND_XDNDDIRECTSAVE_TYPE	"XdndDirectSave0" /* XDS Protocol Type */
+ 
+ /* Item of the drag selection list */
+ typedef struct {
+@@ -57,6 +58,7 @@ typedef enum {
+ 	NAUTILUS_ICON_DND_KEYWORD,
+ 	NAUTILUS_ICON_DND_TEXT,
+ 	NAUTILUS_ICON_DND_RESET_BACKGROUND,
++	NAUTILUS_ICON_DND_XDNDDIRECTSAVE,
+ 	NAUTILUS_ICON_DND_ROOTWINDOW_DROP
+ } NautilusIconDndTargetType;
+ 
+diff -r -u -p nautilus-2.18.1/libnautilus-private/nautilus-file-dnd.c nautilus-2.18.1-attila/libnautilus-private/nautilus-file-dnd.c
+--- nautilus-2.18.1/libnautilus-private/nautilus-file-dnd.c	2007-04-10 14:06:07.000000000 +0200
++++ nautilus-2.18.1-attila/libnautilus-private/nautilus-file-dnd.c	2007-09-07 04:01:46.000000000 +0200
+@@ -115,6 +115,9 @@ nautilus_drag_can_accept_info (NautilusF
+ 		case NAUTILUS_ICON_DND_TEXT:
+ 			return nautilus_drag_can_accept_files (drop_target_item);
+ 
++		case NAUTILUS_ICON_DND_XDNDDIRECTSAVE:
++			return nautilus_drag_can_accept_files (drop_target_item); /* Check if we can accept files at this location */
++
+ 		case NAUTILUS_ICON_DND_KEYWORD:
+ 			return TRUE;
+ 
+diff -r -u -p nautilus-2.18.1/libnautilus-private/nautilus-icon-dnd.c nautilus-2.18.1-attila/libnautilus-private/nautilus-icon-dnd.c
+--- nautilus-2.18.1/libnautilus-private/nautilus-icon-dnd.c	2007-04-10 14:06:07.000000000 +0200
++++ nautilus-2.18.1-attila/libnautilus-private/nautilus-icon-dnd.c	2007-09-07 04:01:46.000000000 +0200
+@@ -24,6 +24,10 @@
+             Darin Adler <darin@bentspoon.com>,
+ 	    Andy Hertzfeld <andy@eazel.com>
+ 	    Pavel Cisler <pavel@eazel.com>
++	    
++
++   XDS support: Benedikt Meurer <benny@xfce.org> (adapted by Amos Brocco <amos.brocco@unifr.ch>)
++				
+ */
+ 
+ 
+@@ -76,6 +80,7 @@ static const GtkTargetEntry drop_types [
+ 	{ NAUTILUS_ICON_DND_BGIMAGE_TYPE, 0, NAUTILUS_ICON_DND_BGIMAGE },
+ 	{ NAUTILUS_ICON_DND_KEYWORD_TYPE, 0, NAUTILUS_ICON_DND_KEYWORD },
+ 	{ NAUTILUS_ICON_DND_RESET_BACKGROUND_TYPE,  0, NAUTILUS_ICON_DND_RESET_BACKGROUND },
++	{ NAUTILUS_ICON_DND_XDNDDIRECTSAVE_TYPE, 0, NAUTILUS_ICON_DND_XDNDDIRECTSAVE }, /* XDS Protocol Type */
+ 	/* Must be last: */
+ 	{ NAUTILUS_ICON_DND_ROOTWINDOW_DROP_TYPE,  0, NAUTILUS_ICON_DND_ROOTWINDOW_DROP }
+ };
+@@ -1195,6 +1200,7 @@ nautilus_icon_container_get_drop_action 
+ 		break;
+ 
+ 	case NAUTILUS_ICON_DND_TEXT:
++	case NAUTILUS_ICON_DND_XDNDDIRECTSAVE:
+ 		*action = GDK_ACTION_COPY;
+ 		break;
+ 	}
+@@ -1505,9 +1511,106 @@ drag_drop_callback (GtkWidget *widget,
+ 		    gpointer data)
+ {
+ 	NautilusIconDndInfo *dnd_info;
++	GtkTargetList *list;
++	GdkAtom target;
++	guint info;
++	gboolean found;
++	guchar *prop_text;
++	gint prop_len;
++	GnomeVFSURI *base;
++	char *basePath;
++	gchar *uri = NULL;
++	gboolean icon_hit;
++	icon_hit = FALSE;
++	
++	if (drop_types_list == NULL) {
++		drop_types_list = gtk_target_list_new (drop_types,
++						       G_N_ELEMENTS (drop_types) - 1);
++		gtk_target_list_add_text_targets (drop_types_list, NAUTILUS_ICON_DND_TEXT);
++	}
++	if (drop_types_list_root == NULL) {
++		drop_types_list_root = gtk_target_list_new (drop_types,
++							    G_N_ELEMENTS (drop_types));
++		gtk_target_list_add_text_targets (drop_types_list_root, NAUTILUS_ICON_DND_TEXT);
++	}
++
++	if (nautilus_icon_container_get_is_desktop (NAUTILUS_ICON_CONTAINER (widget))) {
++		list = drop_types_list_root;
++	} else {
++		list = drop_types_list;
++	}
+ 
+ 	dnd_info = NAUTILUS_ICON_CONTAINER (widget)->details->dnd_info;
+ 
++	target = gtk_drag_dest_find_target (widget, context, list);
++	
++	if (G_UNLIKELY (target == GDK_NONE)) {
++		return FALSE;
++	} else if (target != GDK_NONE) {
++		found = gtk_target_list_find (list, target, &info);
++		g_assert (found);
++		if (info == NAUTILUS_ICON_DND_XDNDDIRECTSAVE) {
++				 if (gdk_property_get (context->source_window, gdk_atom_intern (NAUTILUS_ICON_DND_XDNDDIRECTSAVE_TYPE, FALSE),
++				                                gdk_atom_intern ("text/plain", FALSE), 0, 1024, FALSE, NULL, NULL,
++				                                &prop_len, &prop_text) && prop_text != NULL) {
++				              /* Zero-terminate the string */
++				              prop_text = g_realloc (prop_text, prop_len + 1);
++				              prop_text[prop_len] = '\0';
++
++				              /* Verify that the file name provided by the source is valid */
++				              if (G_LIKELY (*prop_text != '\0' && strchr ((const gchar *) prop_text, G_DIR_SEPARATOR) == NULL)) {
++							double world_x, world_y;
++							NautilusIcon *drop_target_icon;
++
++							/* Retrieve drop target path */
++							canvas_widget_to_world (EEL_CANVAS (NAUTILUS_ICON_CONTAINER (widget)), x, y, &world_x, &world_y);
++							drop_target_icon = nautilus_icon_container_item_at (NAUTILUS_ICON_CONTAINER (widget), world_x, world_y);
++							if (drop_target_icon == NULL) {
++								basePath = get_container_uri (NAUTILUS_ICON_CONTAINER (widget));
++							} else {
++								basePath = nautilus_icon_container_get_icon_uri (NAUTILUS_ICON_CONTAINER (widget), drop_target_icon);
++							}
++
++							if (eel_uri_is_trash (basePath)) {
++									g_free (basePath);
++									basePath = NULL; /* Cannot save to trash ...*/
++							} else if (eel_uri_is_desktop (basePath)) {
++									basePath = nautilus_get_desktop_directory_uri ();
++							}
++							
++							if (basePath != NULL) {
++								/* Resolve relative path */
++								base = gnome_vfs_uri_new (basePath);
++								base = gnome_vfs_uri_append_file_name (base, (const gchar *) prop_text);
++								uri = gnome_vfs_uri_to_string (base, GNOME_VFS_URI_HIDE_NONE);
++								/* Change the property */
++								gdk_property_change (GDK_DRAWABLE (context->source_window),
++		                                				gdk_atom_intern (NAUTILUS_ICON_DND_XDNDDIRECTSAVE_TYPE, FALSE),
++		                                				gdk_atom_intern ("text/plain", FALSE), 8,
++		                                				GDK_PROP_MODE_REPLACE, (const guchar *) uri,
++		                                				strlen (uri));
++
++		                				/* Free memory */
++								g_free (basePath);
++		                				gnome_vfs_uri_unref (base);
++		                				g_free (uri);
++							} else {
++								nautilus_debug_log (FALSE, NAUTILUS_DEBUG_LOG_DOMAIN_USER,
++								"Could not retrieve XDS drag site ");
++							}
++				                } else {
++				                  /* tell the user that the file name provided by the X Direct Save source is invalid */
++					       	nautilus_debug_log (FALSE, NAUTILUS_DEBUG_LOG_DOMAIN_USER,
++							"Invalid filename provided by XDS drag site");
++				                }
++				              /* cleanup */
++				              g_free (prop_text);
++				}
++      				/* if uri == NULL, we didn't set the property */
++				if (G_UNLIKELY (uri == NULL))
++					return FALSE;
++		}
++	}
+ 	/* tell the drag_data_received callback that
+ 	   the drop occured and that it can actually
+ 	   process the actions.
+@@ -1626,6 +1729,7 @@ drag_data_received_callback (GtkWidget *
+ 	char *tmp;
+ 	gboolean success;
+ 
++
+ 	drag_info = &(NAUTILUS_ICON_CONTAINER (widget)->details->dnd_info->drag_info);
+ 
+ 	drag_info->got_drop_data_type = TRUE;
+@@ -1641,6 +1745,7 @@ drag_data_received_callback (GtkWidget *
+ 	case NAUTILUS_ICON_DND_URI_LIST:
+ 	case NAUTILUS_ICON_DND_TEXT:
+ 	case NAUTILUS_ICON_DND_RESET_BACKGROUND:
++	case NAUTILUS_ICON_DND_XDNDDIRECTSAVE:
+ 		/* Save the data so we can do the actual work on drop. */
+ 		if (drag_info->selection_data != NULL) {
+ 			gtk_selection_data_free (drag_info->selection_data);
+@@ -1720,6 +1825,24 @@ drag_data_received_callback (GtkWidget *
+ 		case NAUTILUS_ICON_DND_ROOTWINDOW_DROP:
+ 			/* Do nothing, everything is done by the sender */
+ 			break;
++		case NAUTILUS_ICON_DND_XDNDDIRECTSAVE:
++			/* Indicate that we don't provide "F" fallback */
++          		if (G_UNLIKELY (drag_info->selection_data->format == 8 
++					&& drag_info->selection_data->length == 1 
++					&& drag_info->selection_data->data[0] == 'F')) {
++	              		gdk_property_change (GDK_DRAWABLE (context->source_window),
++	                                   gdk_atom_intern (NAUTILUS_ICON_DND_XDNDDIRECTSAVE_TYPE, FALSE),
++	                                   gdk_atom_intern ("text/plain", FALSE), 8,
++	                                   GDK_PROP_MODE_REPLACE, (const guchar *) "", 0);
++            		} else if (G_LIKELY (drag_info->selection_data->format == 8 
++					&& drag_info->selection_data->length == 1 
++					&& drag_info->selection_data->data[0] == 'S')) {
++              		/* XDS was successful, so update the drop target */
++			nautilus_icon_dnd_update_drop_target (NAUTILUS_ICON_CONTAINER (widget),
++							      context, x, y);
++            		}
++		        success = TRUE;
++			break;
+ 		}
+ 		gtk_drag_finish (context, success, FALSE, time);
+ 		
