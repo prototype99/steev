@@ -25,7 +25,8 @@ PDEPEND="!minimal? ( x11-wm/twm
 
 PATCHES="${FILESDIR}/nolisten-tcp-and-black-background.patch
 	${FILESDIR}/gentoo-startx-customization-${PV}.patch
-	${FILESDIR}/rh-xinit-use-consolekit-1.patch"
+	${FILESDIR}/${PN}-1.0.4-console-kit.patch"
+#	${FILESDIR}/rh-xinit-use-consolekit-1.patch"
 
 src_unpack() {
 	x-modular_unpack_source
