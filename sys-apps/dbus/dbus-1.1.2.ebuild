@@ -29,11 +29,10 @@ src_unpack() {
 
 	# fix dnotify issue with not detecting created files
 	epatch "${FILESDIR}"/${PN}-1.0.1-fixfilecreation.patch
-	# experimental inotify support ;)
+	# Experimental (woowoo!) inotify support... please test!
 	epatch "${FILESDIR}"/${PN}-1.0.0-inotify.patch
-	# Adds defines for dbus versioning...
 	epatch "${FILESDIR}"/${PN}-version-checking.patch
-
+	epatch "${FILESDIR}"/${PN}-1.1.2-get-effective-id.patch
 	eautoreconf
 }
 
@@ -118,5 +117,6 @@ pkg_postinst() {
 	elog
 	ewarn
 	ewarn "You MUST run 'revdep-rebuild' after emerging this package"
+	elog  "If you notice any issues, please rebuild sys-apps/hal"
 	ewarn
 }

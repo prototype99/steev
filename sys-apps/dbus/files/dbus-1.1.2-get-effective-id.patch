@@ -1,0 +1,71 @@
+diff -ruN dbus-1.1.2.orig/bus/activation-helper.c dbus-1.1.2/bus/activation-helper.c
+--- dbus-1.1.2.orig/bus/activation-helper.c	2007-09-12 11:32:16.000000000 -0500
++++ dbus-1.1.2/bus/activation-helper.c	2007-09-12 11:38:29.000000000 -0500
+@@ -200,7 +200,7 @@
+                       "cannot find user '%s'", dbus_user);
+       return FALSE;
+     }
+-  uid = getuid();
++  uid = geteuid();
+   if (pw->pw_uid != uid)
+     {
+       dbus_set_error (error, DBUS_ERROR_SPAWN_PERMISSIONS_INVALID,
+diff -ruN dbus-1.1.2.orig/dbus/dbus-sysdeps-unix.c dbus-1.1.2/dbus/dbus-sysdeps-unix.c
+--- dbus-1.1.2.orig/dbus/dbus-sysdeps-unix.c	2007-09-12 11:32:16.000000000 -0500
++++ dbus-1.1.2/dbus/dbus-sysdeps-unix.c	2007-09-12 11:35:08.000000000 -0500
+@@ -1664,7 +1664,7 @@
+ _dbus_append_user_from_current_process (DBusString *str)
+ {
+   return _dbus_string_append_uint (str,
+-                                   _dbus_getuid ());
++                                   _dbus_geteuid ());
+ }
+ 
+ /**
+@@ -1686,6 +1686,15 @@
+   return getuid ();
+ }
+ 
++/** Gets our effective UID
++ * @returns process effective UID
++ */
++dbus_uid_t
++_dbus_geteuid (void)
++{
++   return geteuid ();
++}
++
+ /**
+  * The only reason this is separate from _dbus_getpid() is to allow it
+  * on Windows for logging but not for other purposes.
+diff -ruN dbus-1.1.2.orig/dbus/dbus-sysdeps-unix.h dbus-1.1.2/dbus/dbus-sysdeps-unix.h
+--- dbus-1.1.2.orig/dbus/dbus-sysdeps-unix.h	2007-09-12 11:32:16.000000000 -0500
++++ dbus-1.1.2/dbus/dbus-sysdeps-unix.h	2007-09-12 11:35:51.000000000 -0500
+@@ -121,6 +121,7 @@
+ void        _dbus_group_info_free     (DBusGroupInfo    *info);
+ 
+ dbus_uid_t    _dbus_getuid (void);
++dbus_uid_t    _dbus_geteuid (void);
+ dbus_gid_t    _dbus_getgid (void);
+ 
+ dbus_bool_t _dbus_parse_uid (const DBusString  *uid_str,
+diff -ruN dbus-1.1.2.orig/dbus/dbus-sysdeps-util-unix.c dbus-1.1.2/dbus/dbus-sysdeps-util-unix.c
+--- dbus-1.1.2.orig/dbus/dbus-sysdeps-util-unix.c	2007-09-12 11:32:16.000000000 -0500
++++ dbus-1.1.2/dbus/dbus-sysdeps-util-unix.c	2007-09-12 11:37:55.000000000 -0500
+@@ -294,7 +294,7 @@
+     }
+   
+ #ifdef HAVE_LIBAUDIT
+-  we_were_root = _dbus_getuid () == 0;
++  we_were_root = _dbus_geteuid () == 0;
+   new_caps = NULL;
+   /* have a tmp set of caps that we use to transition to the usr/grp dbus should
+    * run as ... doesn't really help. But keeps people happy.
+@@ -952,7 +952,7 @@
+ dbus_bool_t
+ _dbus_unix_user_is_process_owner (dbus_uid_t uid)
+ {
+-  return uid == _dbus_getuid ();
++  return uid == _dbus_geteuid ();
+ }
+ 
