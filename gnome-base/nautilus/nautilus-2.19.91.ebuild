@@ -65,6 +65,7 @@ src_unpack() {
 
 	eautoreconf
 	epatch "${FILESDIR}"/${PN}-2.18-xdnd.patch
+	epatch "${FILESDIR}"/${PN}-2.18-xdnd-treeview.patch
 }
 
 src_test() {
