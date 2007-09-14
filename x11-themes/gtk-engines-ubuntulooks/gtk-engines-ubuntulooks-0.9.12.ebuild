@@ -2,25 +2,33 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit eutils gnome2
+inherit eutils
 
-MY_P="ubuntulooks_${PV}"
-
-DESCRIPTION="Ubuntu GTK+ theme based on Clearlooks"
-HOMEPAGE="http://www.ubuntu.com/testing/flight5#head-8e514c39116551b6503ac8bc874d7d6d143657e4"
-SRC_URI="http://archive.ubuntu.com/ubuntu/pool/main/u/ubuntulooks/${MY_P}.orig.tar.gz"
-
+MY_PN=ubuntulooks
+MY_P=${MY_PN}_${PV}
+DESCRIPTION="Ubuntu GTK 2 Theme Engine (based on Clearlooks)"
+HOMEPAGE="http://packages.ubuntu.com/edgy/gnome/gtk2-engines-ubuntulooks"
+SRC_URI="http://archive.ubuntu.com/ubuntu/pool/main/u/${MY_PN}/${MY_P}.orig.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~x86"
-S=${WORKDIR}/${MY_P/_/-}
+KEYWORDS="~amd65 ~ppc ~x86"
 
-DEPEND=">=x11-themes/gtk-engines-2.6.5
-	>=x11-libs/gtk+-2.8.8"
-RDEPEND="${DEPEND}"
+S=${WORKDIR}/${MY_PN}-${PV}
+
+DEPEND=">=x11-libs/gtk+-2.8.8"
 
 src_unpack() {
 	unpack ${A}
 	cd ${S}
-	epatch ${FILESDIR}/ubuntulooks_0.9.12-5.diff
+	epatch ${FILESDIR}/${MY_P}-5.diff
+}
+
+src_compile() {
+	econf
+	emake || die "Compilation failed"
+}
+
+src_install() {
+	make DESTDIR="${D}" install || die "Installation failed"
+	dodoc ChangeLog README
 }
