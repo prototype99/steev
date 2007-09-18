@@ -4,11 +4,9 @@
 
 inherit eutils pam
 
-MY_PV=${PV/_*/}
-
 DESCRIPTION="pam_usb provides hardware authentication for Linux using ordinary USB Flash Drives."
-#SRC_URI="mirror://sourceforge/pamusb/${P}.tar.gz"
-SRC_URI="http://sig11.org/~scox/pam_usb/${P}.tar.gz"
+SRC_URI="mirror://sourceforge/pamusb/${P}.tar.gz"
+#SRC_URI="http://sig11.org/~scox/pam_usb/${P}.tar.gz"
 HOMEPAGE="http://www.pamusb.org/"
 
 LICENSE="GPL-2"
@@ -28,8 +26,6 @@ RDEPEND="
 DEPEND="
 	${RDEPEND}
 	dev-util/pkgconfig"
-
-S=${WORKDIR}/${PN}-${MY_PV}
 
 src_install() {
 	dodir $(getpam_mod_dir) /usr/bin
