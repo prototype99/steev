@@ -1,20 +1,20 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-wireless/madwifi-ng/madwifi-ng-0.9.3.1.ebuild,v 1.5 2007/07/07 11:01:13 genstef Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-wireless/madwifi-ng/madwifi-ng-0.9.3.2.ebuild,v 1.4 2007/08/15 21:29:30 dertobi123 Exp $
 
 inherit linux-mod
-MY_PV=0.9.3.2-rc1
-MY_P=${PN/-ng/}-${MY_PV}
+
+MY_P=${PN/-ng/}-${PV}
 S=${WORKDIR}/${MY_P}
 
 DESCRIPTION="Next Generation driver for Atheros based IEEE 802.11a/b/g wireless LAN cards"
 HOMEPAGE="http://www.madwifi.org/"
-SRC_URI="mirror://sourceforge/madwifi/madwifi-0.9.3.2-rc1.tar.gz"
+SRC_URI="mirror://sourceforge/madwifi/madwifi-${PV}.tar.bz2"
 
 LICENSE="atheros-hal
 	|| ( BSD GPL-2 )"
 SLOT="0"
-KEYWORDS="amd64 ppc x86"
+KEYWORDS="~amd64 ~ppc ~x86"
 IUSE="injection"
 
 DEPEND="app-arch/sharutils"
@@ -54,11 +54,11 @@ src_unpack() {
 
 	cd ${S}
 	epatch ${FILESDIR}/${PN}-0.9.3-uudecode-gcda-fix.patch
+	epatch ${FILESDIR}/${PN}-0.9.3.2-xrates.patch
 	if use injection; then epatch ${FILESDIR}/${PN}-r1886.patch; fi
 	for dir in ath ath_hal net80211 ath_rate ath_rate/amrr ath_rate/onoe ath_rate/sample; do
 		convert_to_m ${S}/${dir}/Makefile
 	done
-
 }
 
 src_install() {
