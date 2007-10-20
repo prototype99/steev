@@ -1,19 +1,19 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-wireless/madwifi-ng-tools/madwifi-ng-tools-0.9.3.1.ebuild,v 1.1 2007/05/23 16:02:35 genstef Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-wireless/madwifi-ng-tools/madwifi-ng-tools-0.9.3.3.ebuild,v 1.1 2007/10/20 22:17:06 steev Exp $
 
 inherit toolchain-funcs
-MY_PV=0.9.3.2-rc1
-MY_P=${PN/-ng-tools/}-${MY_PV}
+
+MY_P=${PN/-ng-tools/}-${PV}
 S=${WORKDIR}/${MY_P}/tools
 
 DESCRIPTION="Next Generation tools for configuration of Atheros based IEEE 802.11a/b/g wireless LAN cards"
 HOMEPAGE="http://www.madwifi.org/"
-SRC_URI="mirror://sourceforge/madwifi/madwifi-0.9.3.2-rc1.tar.gz"
+SRC_URI="mirror://sourceforge/madwifi/madwifi-${PV}.tar.bz2"
 
 LICENSE="|| ( BSD GPL-2 )"
 SLOT="0"
-KEYWORDS="amd64 ppc x86"
+KEYWORDS="~amd64 ~ppc ~x86"
 
 IUSE=""
 DEPEND="virtual/libc"
@@ -35,7 +35,7 @@ einfo "PV=$PV"
 		-e "s:CC =.*:CC = $(tc-getCC):" \
 		-e "s:CFLAGS=:CFLAGS+=:" \
 		-e "s:LDFLAGS=:LDFLAGS+=:" \
-		${S}/Makefile || die
+		"${S}"/Makefile || die
 }
 
 src_compile() {
@@ -51,7 +51,7 @@ src_install() {
 
 	# install headers for use by
 	# net-wireless/wpa_supplicant and net-wireless/hostapd
-	cd ${S}/..
+	cd "${S}"/..
 	insinto /usr/include/madwifi/include/
 	doins include/*.h
 	insinto /usr/include/madwifi/net80211
