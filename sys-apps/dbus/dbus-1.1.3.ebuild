@@ -31,7 +31,7 @@ src_unpack() {
 	epatch "${FILESDIR}"/${PN}-1.0.1-fixfilecreation.patch
 	# Experimental (woowoo!) inotify support... please test!
 	epatch "${FILESDIR}"/${PN}-1.0.0-inotify.patch
-	epatch "${FILESDIR}"/${PN}-version-checking.patch
+	#epatch "${FILESDIR}"/${PN}-version-checking.patch
 	epatch "${FILESDIR}"/${PN}-1.1.2-get-effective-id.patch
 	eautoreconf
 }
