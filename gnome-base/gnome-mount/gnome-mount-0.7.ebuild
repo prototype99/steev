@@ -14,14 +14,14 @@ SLOT="0"
 KEYWORDS=""
 IUSE="debug gnome kernel_FreeBSD"
 
-RDEPEND=">=gnome-base/libgnomeui-2.13
-	>=sys-apps/hal-0.5.8.1
+RDEPEND=">=sys-apps/hal-0.5.8.1
 	>=x11-libs/gtk+-2.8
 	gnome-base/gnome-keyring
 	>=gnome-base/libglade-2
 	>=gnome-base/gconf-2
 	x11-libs/libnotify
 	gnome? (
+		>=gnome-base/libgnomeui-2.13
 		>=gnome-base/nautilus-2.5
 		>=gnome-base/eel-2.5
 		)
