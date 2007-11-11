@@ -25,7 +25,7 @@ src_unpack() {
 	# with baselayout-2.
 	epatch ${FILESDIR}/${PN}-3.0-daemon.patch
 	# We don't and won't have dbus snapshots in the tree
-	epatch ${FILESDIR}/${PN}-3.0-dbus.patch
+	#epatch ${FILESDIR}/${PN}-3.0-dbus.patch
 }
 
 src_install() {
