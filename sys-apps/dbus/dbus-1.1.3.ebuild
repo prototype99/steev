@@ -6,7 +6,9 @@ inherit eutils multilib autotools flag-o-matic
 
 DESCRIPTION="A message bus system, a simple way for applications to talk to each other"
 HOMEPAGE="http://dbus.freedesktop.org/"
-SRC_URI="http://dbus.freedesktop.org/releases/dbus/${P}.tar.gz"
+# Since its a development snapshot, based on git, I host it personally.
+SRC_URI="http://steev.net/files/distfiles/${P}.tar.gz"
+#SRC_URI="http://dbus.freedesktop.org/releases/dbus/${P}.tar.gz"
 
 LICENSE="|| ( GPL-2 AFL-2.1 )"
 SLOT="0"
