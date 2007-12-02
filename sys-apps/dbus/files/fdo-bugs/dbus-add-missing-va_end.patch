@@ -1,0 +1,11 @@
+diff -pur dbus-1.0.2/dbus/dbus-errors.c dbus-1.0.2.new/dbus/dbus-errors.c
+--- dbus-1.0.2/dbus/dbus-errors.c	2006-12-11 21:21:07.000000000 +0200
++++ dbus-1.0.2.new/dbus/dbus-errors.c	2007-10-18 12:49:31.839392256 +0300
+@@ -360,6 +360,7 @@ dbus_set_error (DBusError  *error,
+       if (!_dbus_string_append_printf_valist (&str, format, args))
+         {
+           _dbus_string_free (&str);
++          va_end (args);
+           goto nomem;
+         }
+       va_end (args);

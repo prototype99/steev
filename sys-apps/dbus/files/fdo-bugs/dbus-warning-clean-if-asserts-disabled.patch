@@ -1,0 +1,61 @@
+cvs diff dbus/dbus-marshal-recursive.c
+Index: dbus/dbus-marshal-recursive.c
+===================================================================
+RCS file: /cvs/dbus/dbus/dbus/dbus-marshal-recursive.c,v
+retrieving revision 1.56
+diff -u -p -r1.56 dbus-marshal-recursive.c
+--- dbus/dbus-marshal-recursive.c       21 Oct 2006 23:09:18 -0000      1.56
++++ dbus/dbus-marshal-recursive.c       14 Nov 2006 21:50:00 -0000
+@@ -690,6 +690,7 @@ static const DBusTypeReaderClass variant
+   base_reader_next
+ };
+
++#ifndef DBUS_DISABLE_ASSERT
+ static const DBusTypeReaderClass const *
+ all_reader_classes[] = {
+   &body_reader_class,
+@@ -702,6 +703,7 @@ all_reader_classes[] = {
+   &array_types_only_reader_class,
+   &variant_reader_class
+ };
++#endif
+
+ /**
+  * Initializes a type reader.
+
+cvs diff dbus/dbus-server-socket.c
+Index: dbus/dbus-server-socket.c
+===================================================================
+RCS file: /cvs/dbus/dbus/dbus/dbus-server-socket.c,v
+retrieving revision 1.3
+diff -u -p -r1.3 dbus-server-socket.c
+--- dbus/dbus-server-socket.c   1 Oct 2006 15:36:18 -0000       1.3
++++ dbus/dbus-server-socket.c   14 Nov 2006 21:50:36 -0000
+@@ -148,7 +148,9 @@ socket_handle_watch (DBusWatch    *watch
+                    void         *data)
+ {
+   DBusServer *server = data;
++#ifndef DBUS_DISABLE_ASSERT
+   DBusServerSocket *socket_server = data;
++#endif
+
+   SERVER_LOCK (server);
+
+cvs diff dbus/dbus-string.c
+Index: dbus/dbus-string.c
+===================================================================
+RCS file: /cvs/dbus/dbus/dbus/dbus-string.c,v
+retrieving revision 1.75
+diff -u -p -r1.75 dbus-string.c
+--- dbus/dbus-string.c  21 Oct 2006 18:17:02 -0000      1.75
++++ dbus/dbus-string.c  14 Nov 2006 21:52:37 -0000
+@@ -1168,7 +1168,9 @@ _dbus_string_insert_alignment (DBusStrin
+                                int               *insert_at,
+                                int                alignment)
+ {
++#ifndef DBUS_DISABLE_ASSERT
+   DBUS_STRING_PREAMBLE (str);
++#endif
+
+   if (!align_insert_point_then_open_gap (str, insert_at, alignment, 0))
+     return FALSE;

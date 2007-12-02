@@ -1,6 +1,6 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-apps/dbus/dbus-1.0.2-r2.ebuild,v 1.12 2007/05/13 07:12:30 kumba Exp $
+# $Header: $
 
 inherit eutils multilib autotools flag-o-matic
 
@@ -33,8 +33,18 @@ src_unpack() {
 	epatch "${FILESDIR}"/${PN}-1.0.1-fixfilecreation.patch
 	# Experimental (woowoo!) inotify support... please test!
 	epatch "${FILESDIR}"/${PN}-1.0.0-inotify.patch
-	#epatch "${FILESDIR}"/${PN}-version-checking.patch
 	epatch "${FILESDIR}"/${PN}-1.1.2-get-effective-id.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-NULL-check-to-babysitter.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-missing-oom-checks.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-missing-va_end.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-dead_code.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-dnotify-notice-create.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-fix-possible-crash.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-fix_dbus_poll-calls-in-dbus-spawn.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-oom-check-dbus_get_autolaunch_address.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-oom-check-dbus_get_local_machine_id.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-remove-fuction-dbus_shell_quote.patch
+	epatch "${FILESDIR}"/fdo-bugs/${PN}-remove-fuction-retval-config-parser.patch
 	eautoreconf
 }
 

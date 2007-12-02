@@ -1,0 +1,87 @@
+diff -pur dbus-1.0.2/dbus/dbus-shell.c dbus-1.0.2.new/dbus/dbus-shell.c
+--- dbus-1.0.2/dbus/dbus-shell.c	2006-12-11 21:21:08.000000000 +0200
++++ dbus-1.0.2.new/dbus/dbus-shell.c	2007-10-26 13:43:48.531670888 +0300
+@@ -140,72 +140,6 @@ unquote_string_inplace (char* str, char*
+   return FALSE;
+ }
+ 
+-/**
+- * Quotes a string so that the shell (/bin/sh) will interpret the
+- * quoted string to mean @unquoted_string. If you pass a filename to
+- * the shell, for example, you should first quote it with this
+- * function.  The return value must be freed with dbus_free(). The
+- * quoting style used is undefined (single or double quotes may be
+- * used).
+- * 
+- * @unquoted_string: a literal string
+- **/
+-char*
+-_dbus_shell_quote (const char *unquoted_string)
+-{
+-  /* We always use single quotes, because the algorithm is cheesier.
+-   * We could use double if we felt like it, that might be more
+-   * human-readable.
+-   */
+-
+-  const char *p;
+-  char *ret;
+-  DBusString dest;
+-  
+-  _dbus_string_init (&dest);
+-
+-  p = unquoted_string;
+-
+-  /* could speed this up a lot by appending chunks of text at a
+-   * time.
+-   */
+-  while (*p)
+-    {
+-      /* Replace literal ' with a close ', a \', and a open ' */
+-      if (*p == '\'')
+-	{
+-	  if (!_dbus_string_append (&dest, "'\\''"))
+-	    {
+-	      _dbus_string_free (&dest);
+-	      return NULL;
+-	    }
+-	}
+-      else
+-	{
+-	  if (!_dbus_string_append_byte (&dest, *p))
+-	    {
+-	      _dbus_string_free (&dest);
+-	      return NULL;
+-	    }
+-	}
+-
+-      ++p;
+-    }
+-
+-  /* close the quote */
+-  if (_dbus_string_append_byte (&dest, '\''))
+-    {
+-      ret = _dbus_strdup (_dbus_string_get_data (&dest));
+-      _dbus_string_free (&dest);
+-
+-      return ret;
+-    }
+-
+-  _dbus_string_free (&dest);
+-
+-  return NULL;
+-}
+-
+ /** 
+  * Unquotes a string as the shell (/bin/sh) would. Only handles
+  * quotes; if a string contains file globs, arithmetic operators,
+diff -pur dbus-1.0.2/dbus/dbus-shell.h dbus-1.0.2.new/dbus/dbus-shell.h
+--- dbus-1.0.2/dbus/dbus-shell.h	2006-12-11 21:21:16.000000000 +0200
++++ dbus-1.0.2.new/dbus/dbus-shell.h	2007-10-26 13:44:20.263846864 +0300
+@@ -28,7 +28,6 @@
+ 
+ DBUS_BEGIN_DECLS
+ 
+-char*       _dbus_shell_quote      (const char *unquoted_string);
+ char*       _dbus_shell_unquote    (const char *quoted_string);
+ dbus_bool_t _dbus_shell_parse_argv (const char *command_line,
+                                     int        *argcp,

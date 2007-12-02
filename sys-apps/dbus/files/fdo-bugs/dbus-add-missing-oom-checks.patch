@@ -1,0 +1,37 @@
+diff -pur dbus-1.0.2/dbus/dbus-internals.c dbus-1.0.2.new/dbus/dbus-internals.c
+--- dbus-1.0.2/dbus/dbus-internals.c	2006-12-11 21:21:06.000000000 +0200
++++ dbus-1.0.2.new/dbus/dbus-internals.c	2007-10-26 11:18:45.811685424 +0300
+@@ -539,8 +539,18 @@ _dbus_read_uuid_file_without_creating (c
+   DBusString decoded;
+   int end;
+   
+-  _dbus_string_init (&contents);
+-  _dbus_string_init (&decoded);
++  if (!_dbus_string_init (&contents))
++    {
++      _DBUS_SET_OOM (error);
++      return FALSE;
++    }
++
++  if (!_dbus_string_init (&decoded))
++    {
++      _dbus_string_free (&contents);
++      _DBUS_SET_OOM (error);
++      return FALSE;
++    }
+   
+   if (!_dbus_file_get_contents (&contents, filename, error))
+     goto error;
+@@ -604,7 +614,11 @@ _dbus_create_uuid_file_exclusively (cons
+ {
+   DBusString encoded;
+ 
+-  _dbus_string_init (&encoded);
++  if (!_dbus_string_init (&encoded))
++    {
++      _DBUS_SET_OOM (error);
++      return FALSE;
++    }
+ 
+   _dbus_generate_uuid (uuid);
+   
