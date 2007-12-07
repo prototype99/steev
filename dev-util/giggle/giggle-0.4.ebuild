@@ -15,7 +15,7 @@ IUSE=""
 
 RDEPEND=">=dev-libs/glib-2.0
 	>=x11-libs/gtk+-2.10
-	>=x11-libs/gtksourceview-1.8
+	>=x11-libs/gtksourceview-2.0
 	>=gnome-base/libglade-2.4"
 DEPEND="${RDEPEND}
 	>=dev-util/intltool-0.35.0"

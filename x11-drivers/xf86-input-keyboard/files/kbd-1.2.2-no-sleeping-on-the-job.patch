@@ -1,0 +1,11 @@
+diff -up xf86-input-keyboard-1.2.2/src/kbd.c.jx xf86-input-keyboard-1.2.2/src/kbd.c
+--- xf86-input-keyboard-1.2.2/src/kbd.c.jx	2007-08-20 18:38:24.000000000 -0400
++++ xf86-input-keyboard-1.2.2/src/kbd.c	2007-10-09 14:39:55.000000000 -0400
+@@ -543,7 +543,6 @@ KbdProc(DeviceIntPtr device, int what)
+      * passing on parts of the VT switch sequence.
+      */
+     if (pInfo->fd >= 0) {
+-	sleep(1);
+ 	xf86FlushInput(pInfo->fd);
+ 	AddEnabledDevice(pInfo->fd);
+     }
