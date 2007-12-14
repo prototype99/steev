@@ -16,7 +16,7 @@ RDEPEND=">=dev-libs/glib-2.11.0
 	>=x11-libs/gtk+-2.11.0
 	>=gnome-base/libglade-2.6.0
 	>=gnome-base/gconf-2.16.0
-	>=net-libs/gtk-vnc-0.1.0
+	>=net-libs/gtk-vnc-0.3.0
 	avahi? ( >=net-dns/avahi-0.6.18 )
 	"
 DEPEND="${RDEPEND}

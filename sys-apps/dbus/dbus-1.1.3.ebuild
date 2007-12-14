@@ -38,7 +38,6 @@ src_unpack() {
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-missing-oom-checks.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-missing-va_end.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-dead_code.patch
-	epatch "${FILESDIR}"/fdo-bugs/${PN}-dnotify-notice-create.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-fix-possible-crash.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-fix_dbus_poll-calls-in-dbus-spawn.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-oom-check-dbus_get_autolaunch_address.patch

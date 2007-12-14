@@ -17,12 +17,6 @@ DEPEND="x11-libs/vte
 	>=dev-libs/glib-2.8.4
 	dev-libs/confuse"
 
-src_unpack() {
-	unpack ${A}
-	cd ${S}
-	epatch ${FILESDIR}/${PN}-0.9.4-real_transparency.patch
-}
-
 src_install() {
 	emake DESTDIR=${D} install
 	dodoc AUTHORS ChangeLog README TODO
