@@ -1,0 +1,1174 @@
+Index: WebCore/WebCore.pro
+===================================================================
+--- WebCore/WebCore.pro	(revision 28325)
++++ WebCore/WebCore.pro	(working copy)
+@@ -1004,6 +1004,8 @@ gtk-port {
+         platform/graphics/gtk/ImageGtk.cpp \
+         platform/graphics/gtk/IntPointGtk.cpp \
+         platform/graphics/gtk/IntRectGtk.cpp \
++        platform/network/curl/Cookie.cpp \
++        platform/network/curl/CookieManager.cpp \
+         platform/network/curl/ResourceHandleCurl.cpp \
+         platform/network/curl/ResourceHandleManager.cpp \
+         platform/graphics/cairo/AffineTransformCairo.cpp \
+Index: WebCore/platform/gtk/CookieJarGtk.cpp
+===================================================================
+--- WebCore/platform/gtk/CookieJarGtk.cpp	(revision 28325)
++++ WebCore/platform/gtk/CookieJarGtk.cpp	(working copy)
+@@ -28,29 +28,33 @@
+ #include "config.h"
+ #include "CookieJar.h"
+ 
+-#include "DeprecatedString.h"
+-#include "KURL.h"
+-#include "PlatformString.h"
+-#include "StringHash.h"
+-#include <wtf/HashMap.h>
++#include "CookieManager.h"
+ 
+ namespace WebCore {
+ 
+-static HashMap<String, String> cookieJar;
+-
+-void setCookies(const KURL& url, const KURL& /*policyURL*/, const String& value)
++void setCookies(const KURL& url, const KURL& policyURL, const String& value)
+ {
+-    cookieJar.set(url.url(), value);
++    CookieManager* manager = CookieManager::getCookieManager();
++    if (manager)
++        manager->setCookies(url, policyURL, value);
+ }
+ 
+ String cookies(const KURL& url)
+ {
+-    return cookieJar.get(url.url());
++    CookieManager* manager = CookieManager::getCookieManager();
++    if (manager)
++        return manager->cookies(url.url());
++    else
++        return String();
+ }
+ 
+ bool cookiesEnabled()
+ {
+-    return true;
++    CookieManager* manager = CookieManager::getCookieManager();
++    if (manager)
++        return true;
++    else
++        return false;
+ }
+ 
+ }
+Index: WebCore/platform/network/ResourceHandle.h
+===================================================================
+--- WebCore/platform/network/ResourceHandle.h	(revision 28325)
++++ WebCore/platform/network/ResourceHandle.h	(working copy)
+@@ -137,6 +137,11 @@ public:
+     ResourceHandleInternal* getInternal() { return d.get(); }
+ #endif
+ 
++#if USE(CURL)
++    void checkAndSendCookies(KURL url = "");
++    void setCookies();
++#endif
++
+     // Used to work around the fact that you don't get any more NSURLConnection callbacks until you return from the one you're in.
+     static bool loadsBlocked();    
+     
+Index: WebCore/platform/network/curl/Cookie.cpp
+===================================================================
+--- WebCore/platform/network/curl/Cookie.cpp	(revision 0)
++++ WebCore/platform/network/curl/Cookie.cpp	(revision 0)
+@@ -0,0 +1,334 @@
++/*
++ * Copyright (C) 2007 Pleyo.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1.  Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ * 2.  Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ * 3.  Neither the name of Pleyo nor the names of
++ *     its contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY PLEYO AND ITS CONTRIBUTORS "AS IS" AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL PLEYO OR ITS CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++
++#include "Cookie.h"
++
++#include "CookieManager.h"
++#include "Logging.h"
++#include "SystemTime.h"
++
++namespace WebCore {
++
++void Cookie::initFromString(const String& cookie)
++{
++    if (cookie.length() > 4096) {
++        LOG(Network, "cookies are limited to 4KB in size");
++        return;
++    }
++
++    int first;
++    int second;
++
++    // find name
++    first = cookie.find("=");
++    m_name = cookie.left(first);
++    // find value
++    second = cookie.find(";");
++    m_value = cookie.substring(first + 1, second - first - 1);
++    // name is the first arg before =
++    
++    // the expiration date is read in a temporary string
++    String tmpExpires;
++    tmpExpires = extractValueIn("expires=", cookie);
++    
++    if (!tmpExpires || tmpExpires.length() < 20) // then it is a session cookie
++        m_expires = -1;  
++    else
++        // then we convert it in seconds since 1/1/1970
++        m_expires = timeFromString(tmpExpires);
++    
++    m_path = extractValueIn("path=", cookie);
++    if (!m_path) 
++        m_path = "/";
++    
++    m_domain = extractValueIn("domain=", cookie);
++    if (!m_domain.isEmpty() && !m_domain.startsWith(".", false))
++        m_domain = "." + m_domain;
++    
++    if (cookie.contains("secure", false))
++        m_secure = true;
++
++    LOG(Network, "The following cookie was initialized : (%s)=(%s)\n%s=%lf\n%s=%s\n%s=%s\n%s=%d \n", m_name.deprecatedString().ascii(), m_value.deprecatedString().ascii(),
++        "expires", m_expires , "path", m_path.deprecatedString().ascii(), "domain", m_domain.deprecatedString().ascii(), "secure", m_secure);
++}   
++
++String Cookie::createBackupStringFromCookie()
++{
++    String result;
++    
++    result = m_name + "=" + m_value + ";";
++    result += "path=" + m_path + ";" ;
++
++    String tmp = String::number(m_expires);
++    result += "expires=" + tmp + ";secure=";
++    if (m_secure)
++        result += "true;";
++    else
++        result += "false;";
++
++    return result;
++}
++
++void Cookie::initCookieFromBackupString(String cookie, String domain)
++{
++    int first;
++    int second;
++    String tmp;
++
++    // find name
++    first = cookie.find("=");
++    m_name = cookie.left(first);
++
++    // find value
++    second = cookie.find(";");
++    m_value = cookie.substring(first + 1, second - first - 1);
++
++    // find path
++    m_path = extractValueIn("path=", cookie);
++    
++    // find expiration date
++    tmp = extractValueIn("expires=", cookie);
++    m_expires = tmp.toDouble();
++    
++    // the domain is the cookieMap name
++    m_domain = domain;
++    
++    // set secure state
++    tmp = extractValueIn("secure=", cookie);
++    if (tmp.contains("false", true))
++        m_secure = false;
++    else
++        m_secure = true;
++    
++    LOG(Network, "The following cookie was read from file : (%s)=(%s)\n%s=%lf\n%s=%s\n%s=%s\n%s=%d \n", m_name.deprecatedString().ascii(), m_value.deprecatedString().ascii(),
++        "expires", m_expires, "path", m_path.deprecatedString().ascii(), "domain", m_domain.deprecatedString().ascii(), "secure", m_secure);
++}
++
++String Cookie::extractValueIn(const char* name, const String& cookie)
++{
++    int first;
++    int second;
++
++    // find name
++    first = cookie.find(name, 0, false);
++    if (first == -1)
++        return String(); // null string
++    // find value
++    second = cookie.find(";", first);
++    if (second == -1 && cookie.find(" ", first) != -1)
++        // no ";" and no " ", so we're and the end of line
++        second = cookie.length();
++
++    return cookie.substring(first + strlen(name), second - first - strlen(name));
++}
++
++
++/*
++ * CookieMap implementation
++ */
++int CookieMap::add(const Cookie& cookie)
++{
++    int numberAdded = 0;
++    
++    // Check if the cookie already exists to replace it by a new one
++    if (m_cookieMap.contains(cookie.name())) {
++        LOG(Network, "Cookie named %s is replaced by a new one\n", cookie.name().deprecatedString().ascii());
++        m_cookieMap.remove(cookie.name());
++        numberAdded--;
++    }      
++    
++    // Check if the cookie hasn't expired
++    if (cookie.expireDate() != -1 && cookie.expireDate() < currentTime()) {
++        LOG(Network, "COOKIE Removed : %s : his expires date (%lf) is lower than systeme date (%lf) \n", cookie.name().deprecatedString().ascii(), cookie.expireDate(), currentTime());
++        
++        return numberAdded;
++    }
++
++    // Check if there's room for the new cookie in this map, if there is not we make some for it
++    if (m_count >= 20) {
++        LOG(Network, "Cookies are limited to 20 per domain...a cookie from this domain will be REMOVED TO MAKE ROOM for %s.", cookie.name().deprecatedString().ascii());
++        double min = currentTime();
++        HashMap<String, Cookie>::iterator itBak = m_cookieMap.begin();
++        for (HashMap<String, Cookie>::iterator it = m_cookieMap.begin(); it != m_cookieMap.end(); ++it) {
++            if (it->second.expireDate() < min) {
++                min = it->second.expireDate();
++                itBak = it;
++            }
++        }
++        m_cookieMap.remove(itBak);
++        m_count--;
++        numberAdded--;
++    }
++    
++    if ((CookieManager::getCookieManager()->cookiesCount()) >= 300) {
++        LOG(Network, "Cookies' count is limited to 300");
++        return numberAdded;
++    }
++    
++    // We add the cookie in the map
++    m_cookieMap.set(cookie.name(), cookie);
++    
++    // NOTE can't test correctly return state in .second
++    LOG(Network, "*\n* COOKIE ADDED : %s\n***********\n", cookie.name().deprecatedString().ascii());
++    m_count++;
++    numberAdded++;
++    
++    return numberAdded;
++}
++
++String CookieMap::createBackupStringFromCookies()
++{
++    String result;
++    for (HashMap<String, Cookie>::iterator it = m_cookieMap.begin(); it != m_cookieMap.end(); ++it) {
++        if (it->second.expireDate() != -1 && it->second.expireDate() > currentTime()) {
++            result += it->second.createBackupStringFromCookie();
++            result += "\n";
++        } else
++            LOG(Network, "Cookie %s --> removed\n", it->first.deprecatedString().ascii());
++    }
++    
++    return result;
++}
++
++
++// Can't be const because of m_cookieMap.begin() and .end()
++String CookieMap::getNameValuePairs()
++{
++    String result;
++    for (HashMap<String, Cookie>::iterator it = m_cookieMap.begin(); it != m_cookieMap.end(); ++it) {
++        result += it->first + "=" + it->second.value() + "; ";
++        LOG(Network, "first=%s second=%s \n", it->first.deprecatedString().ascii(), it->second.value().deprecatedString().ascii());
++    }
++
++    return result;
++}
++
++// Can't be const because of m_cookieMap.begin() and .end()
++String CookieMap::getNameValuePairs(String path, bool siteIsSecure)
++{
++    String result = "";
++    for (HashMap<String, Cookie>::iterator it = m_cookieMap.begin(); it != m_cookieMap.end(); ++it)
++        if (path.startsWith(it->second.path(), false) && (!it->second.isSecure() || siteIsSecure))
++            result += it->first + "=" + it->second.value() + "; ";
++
++    return result;
++}
++
++static int getDaysTillFirstOfMonth(String month, float year)
++{
++    // This is the number of days elapsed from the begining of the year to the first day of the month
++    static HashMap<String, int> daysTillFirstOfMonth;
++    if (daysTillFirstOfMonth.isEmpty()) {
++        daysTillFirstOfMonth.add("Jan", 0);
++        daysTillFirstOfMonth.add("Feb", 31);
++        daysTillFirstOfMonth.add("Mar", 59);
++        daysTillFirstOfMonth.add("Apr", 90);
++        daysTillFirstOfMonth.add("May", 120);
++        daysTillFirstOfMonth.add("Jun", 151);
++        daysTillFirstOfMonth.add("Jul", 181);
++        daysTillFirstOfMonth.add("Aug", 212);
++        daysTillFirstOfMonth.add("Sep", 242);
++        daysTillFirstOfMonth.add("Oct", 273);
++        daysTillFirstOfMonth.add("Nov", 303);
++        daysTillFirstOfMonth.add("Dec", 334);
++    }
++
++    int days = daysTillFirstOfMonth.get(month);
++
++    // Handle the bissextil years
++    if (year / 4 == int(year / 4) && days > 31) 
++        days++;
++
++    return days;
++}
++
++double Cookie::timeFromString(String dateString)
++{
++    double day;
++    double daysTillFirstOfMonth = 0;
++    double hours;
++    double year;
++    double minutes;
++    double seconds;
++    String month;
++    String cutDate;
++    String tmpLeft;
++    String tmpRight;
++    double cookieTime = 0;
++
++    /*
++     * There are several ways to format the date and each web site uses a different one :-/
++     * This fonction tries to analyze the string to obtain the proper format.
++     * When this is done, we extract the values and convert them into a number of seconds since 1/1/1970 0h00m00s
++     */
++
++    tmpRight = dateString.right(3);
++    if (tmpRight.contains("GMT", false))
++        cutDate = dateString.right(24);
++    else
++        cutDate = dateString.right(20);
++
++    // We get the numeric values directly
++    tmpLeft = cutDate.left(2);
++    if (tmpLeft.contains(",", false)) {
++        day = cutDate.substring(2, 2).toDouble();
++        month = month = cutDate.substring(5, 3);
++        year = cutDate.substring(9, 2).toDouble();
++        year = year + 2000;
++    } else {
++        day = cutDate.substring(0, 2).toDouble();
++        month = cutDate.substring(3, 3);
++        year = cutDate.substring(7, 4).toDouble();
++    }
++    
++    // GMT time
++    hours = cutDate.substring(12, 2).toDouble();
++    if (dateString.endsWith("GMT", false));
++        hours = hours + 2.0; // FIXME : this would only work in france
++
++    minutes = cutDate.substring(15, 4).toDouble();
++    seconds = cutDate.substring(18, 4).toDouble();
++
++    daysTillFirstOfMonth = getDaysTillFirstOfMonth(month, year);
++
++    LOG(Network, "Original : %s\nDATE FROM STRING\nDay = %lf\nMonth = %lf\nYear = %lf\nHours = %lf\nMin = %lf\nSec = %lf\n ",dateString.deprecatedString().ascii(), day, daysTillFirstOfMonth, year, hours, minutes, seconds);
++
++    // Now we can calculate the number of seconds since the January 1970 the 1st at 00:00:00
++    cookieTime = (year - 1970) * (60 * 60 * 24 * 365);
++    cookieTime += daysTillFirstOfMonth * (60 * 60 * 24);
++    cookieTime += ((day - 1) + int((year - 1970) / 4)) * (60 * 60 * 24);
++    cookieTime += hours * (60 * 60);
++    cookieTime += minutes * 60;
++    cookieTime += seconds;
++    
++    return cookieTime;
++}
++
++} // namespace WebCore
+Index: WebCore/platform/network/curl/Cookie.h
+===================================================================
+--- WebCore/platform/network/curl/Cookie.h	(revision 0)
++++ WebCore/platform/network/curl/Cookie.h	(revision 0)
+@@ -0,0 +1,171 @@
++/*
++ * Copyright (C) 2007 Pleyo.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1.  Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ * 2.  Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ * 3.  Neither the name of Pleyo nor the names of
++ *     its contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY PLEYO AND ITS CONTRIBUTORS "AS IS" AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL PLEYO OR ITS CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef cookie_h
++#define cookie_h
++
++#include "DeprecatedString.h"
++#include "StringHash.h"
++#include "wtf/HashMap.h"
++#include "PlatformString.h"
++
++namespace WebCore {
++
++class Cookie {
++public:
++    Cookie()
++        : m_expires(0)
++        , m_secure(false)
++    {
++    }
++    
++    Cookie(String& name, String& value, String& expires, String& secure)
++        : m_name(name)
++        , m_value(value)
++        , m_expires(0)
++        , m_secure(false)
++    {
++    }
++    
++    ~Cookie()
++    {
++    }
++    
++    /**
++     * Get the cookie name.
++     */
++    const String& name() const { return m_name; }
++    
++    /**
++    * Get the cookie value.
++     */
++    const String& value() const { return m_value; }
++    
++    /**
++     * Get the cookie path.
++     */
++    const String& path() const { return m_path; }
++    
++    /**
++     * Get the cookie domain.
++     */
++    const String& domain() const { return m_domain; }
++    
++    /**
++     * Get the cookie expire date.
++     */
++    const double expireDate() const { return m_expires; }
++    
++    /**
++    * Returns true if cookie is set for all domain.
++     */
++    bool isDomain() const { return !m_domain.isEmpty(); }
++    
++    /**
++    * The cookie is secured only if the transfer was secured (https).
++     */
++    bool isSecure() const { return m_secure; }
++    
++    /**
++     * Construct the cookie from the values stored in parameter.
++     * @param(in) string containing at least name=value
++     */
++    void initFromString(const String& cookie);
++    
++    /**
++     * Creates a backup string from the cookie
++     * for it to be saved on a file
++     */
++    String createBackupStringFromCookie();
++    
++    /**
++     * Initiate the cookie from a backup string
++     */
++    void initCookieFromBackupString(String cookie, String domain);
++    
++private:
++    // FIXME : we should find a better place for this
++    double timeFromString(String dateString);
++
++    String extractValueIn(const char* name, const String& cookie);
++    String m_name;
++    String m_value;
++    String m_domain;
++    String m_path;
++    double m_expires; /*in seconds since january 1970 the 1st at 00h00m00s */
++    bool m_secure;
++};
++
++/**
++ * A CookieMap is design to hold cookies for one host.
++ * All cookies for one host are stored in a map.
++ */
++class CookieMap {
++public:
++    CookieMap() 
++        : m_count(0)
++    {
++    }
++
++    ~CookieMap()
++    {
++    }
++
++    /**
++     * Store a cookie in map.
++     * If it already exists, it is updated.
++     * @param(in) the cookie
++     */
++    int add(const Cookie& cookie);
++    
++    String createBackupStringFromCookies();
++    
++    /**
++     * Returns "name=value; ..." sequences in one line for all cookies.
++     */
++    String getNameValuePairs();
++    
++    /**
++     * Returns "name=value; ..." sequences in one line for all cookies relative to one path.
++     * @param(in) the path of the asking url
++     * @param(in) boolean to tell if the connection is secured
++     */
++    String getNameValuePairs(String path, bool siteIsSecure);
++    
++    HashMap<String, Cookie> getMap() { return m_cookieMap; }
++    
++private:
++    // Map of cookie names and the Cookie
++    HashMap<String, Cookie> m_cookieMap;
++    
++    // Cookies are limited to 20 per domain
++    unsigned short m_count;
++};
++
++} // namespace WebCore
++#endif
+Index: WebCore/platform/network/curl/CookieManager.cpp
+===================================================================
+--- WebCore/platform/network/curl/CookieManager.cpp	(revision 0)
++++ WebCore/platform/network/curl/CookieManager.cpp	(revision 0)
+@@ -0,0 +1,314 @@
++/*
++ * Copyright (C) 2007 Pleyo.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1.  Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ * 2.  Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ * 3.  Neither the name of Pleyo nor the names of
++ *     its contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY PLEYO AND ITS CONTRIBUTORS "AS IS" AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL PLEYO OR ITS CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++
++#include "CookieManager.h"
++
++#include "Logging.h"
++#include "PlatformString.h"
++
++#include <fcntl.h>
++#include <unistd.h>
++#include <stdio.h>
++
++namespace WebCore {
++
++static char* defaultFileName = "cookieCollection.txt";
++static CookieManager* sharedManager = 0;
++
++CookieManager* CookieManager::getCookieManager()
++{
++    if (!sharedManager)
++        sharedManager = new CookieManager();
++    return sharedManager;
++}
++
++CookieManager::CookieManager()
++    : m_count(0)
++{
++    if (!sharedManager)
++        sharedManager = this;
++    m_cookieJarFileName = defaultFileName;
++    getCookiesFromFile();
++}
++
++CookieManager::~CookieManager()
++{
++    saveCookiesToFile();
++    
++    // destroy all allocated all CookieMap
++    for (HashMap<String, CookieMap*>::iterator it = m_managerMap.begin(); it != m_managerMap.end(); ++it) {
++        LOG(Network, "map for '%s' was '%s'!\n", it->first.deprecatedString().ascii(), it->second->getNameValuePairs().deprecatedString().ascii());
++        delete it->second;
++    }
++
++    if (m_cookieJarFileName != defaultFileName)
++        free(const_cast<char*>(m_cookieJarFileName));
++
++}
++
++unsigned int CookieManager::setCookies(const KURL& url, const KURL& policyURL, const String& value)
++{
++    unsigned int cookiesAdded = 0;
++        
++    Cookie cookie;
++    cookie.initFromString(value);
++
++    if (respectsSecurityStandards(url, cookie))
++        cookiesAdded = add(url.host(), cookie);
++    else
++        LOG(Network, "COOKIE %s is considered as dangerous and will be rejected\n", cookie.name().deprecatedString().ascii());
++
++    return cookiesAdded;    
++}
++
++bool CookieManager::respectsSecurityStandards(const KURL& url, Cookie& cookie)
++{
++    if (!cookie.domain().isEmpty()) {
++        String domain = cookie.domain();
++        domain = domain.right(domain.length() - 1);
++        if (!domain.contains(".", false) || !url.host().endsWith(domain.deprecatedString())) {
++            LOG(Network, "Illegal Cookie : Bad domain name\n");
++            return false;
++        }
++
++        /*
++         * A Set-Cookie from request-host y.x.foo.com for Domain=.foo.com
++         * would be rejected, because y.x and contains a dot.
++         */
++        if (url.host() != domain && url.host().left(url.host().length() - domain.length() - 1).contains(".", false)) {
++            LOG(Network, "Illegal Cookie : y.x.foo.com for Domain=.foo.com\n");
++            return false;
++        }
++    }
++    
++    if (!url.path().startsWith(cookie.path().deprecatedString())) {
++        LOG(Network, "Illegal Cookie : cookie's path doesn't match the present URL\n");
++        return false;
++    }
++    
++    return true;
++}
++
++String CookieManager::cookies(const KURL& url)
++{
++    LOG(Network, "Looking for cookies for URL : %s\n", url.url().ascii());
++
++    HashMap<String, CookieMap*> mapList = getMapListForHost(String(url.host()));
++    if (!mapList.isEmpty()) {
++        String result;
++        if (url.url().startsWith("http:"))
++            for (HashMap<String, CookieMap*>::iterator it = mapList.begin(); it != mapList.end(); ++it)
++                result += it->second->getNameValuePairs(String(url.url().remove(0, url.host().length() + 7)), false);
++        
++        else // https:
++            for (HashMap<String, CookieMap*>::iterator it = mapList.begin(); it != mapList.end(); ++it)
++                result += it->second->getNameValuePairs(String(url.url().remove(0, url.host().length() + 8)), true);
++
++        return result;
++    }
++    
++    return String();
++}
++
++bool CookieManager::thisMapExists(String mapName)
++{
++    for (HashMap<String, CookieMap*>::iterator it = m_managerMap.begin(); it != m_managerMap.end() ; ++it) {
++        if (it->first == mapName)
++            return true;
++    }
++    
++    return false;
++}
++
++int CookieManager::add(const String& host, const Cookie& cookie)
++{
++    int addedCookies = 0;
++    
++    // If the cookie specifies a domain name, the map should have this name else it'll be the host name. 
++    String domain = host;
++    if (!cookie.domain().isEmpty())
++        domain = cookie.domain();
++    
++    // Need to check first if the cookie map already exists to eventually create one
++    if (!thisMapExists(domain)) {
++        CookieMap* newMap = new CookieMap();
++        
++        m_managerMap.set(domain, newMap);
++        printf("NEW CookieMap created : %s \n", domain.deprecatedString().ascii());
++        
++        addedCookies = newMap->add(cookie);
++        m_count += addedCookies;
++        return addedCookies;
++    }
++    
++    // Getting the map related to this host
++    HashMap<String, CookieMap*> existingMap = getMapListForHost(domain, true);
++    
++    LOG(Network, "Trying to add a cookie to : %s \n", domain.deprecatedString().ascii());
++    addedCookies = existingMap.begin()->second->add(cookie);
++    m_count += addedCookies;
++    return addedCookies;
++}
++
++unsigned short CookieManager::cookiesCount()
++{
++    return m_count;
++}
++
++// Can't return CookieMap& because of map.get(host) which returns temporary val
++HashMap<String, CookieMap*> CookieManager::getMapListForHost(const String& host, bool onlyOneMap) const
++{
++    HashMap<String, CookieMap*> res;
++    for (HashMap<String, CookieMap*>::const_iterator it = m_managerMap.begin(); it != m_managerMap.end(); ++it) {
++        if (onlyOneMap && host == it->first) {
++            res.add(it->first, it->second);
++            return res;
++        }
++        
++        // To handle the sub domains, we only check the end of the host to return the map
++        if (!onlyOneMap && host.endsWith(it->first, false) || (it->first.startsWith(".", false) && ("." + host).endsWith(it->first, false)) )
++            res.add(it->first, it->second);
++    }
++    
++    if (res.isEmpty())
++        LOG(Network, "Get MAP for host : %s \n NO MAP FOUND \n", host.deprecatedString().ascii());
++
++    return res; // do not create map for each site visited
++}
++
++void CookieManager::saveCookiesToFile() 
++{
++    int cookieFile = ::open(m_cookieJarFileName, O_WRONLY|O_CREAT|O_TRUNC, 0666);
++    
++    if (cookieFile == -1)
++        LOG(Network, "Cookie file can't be created\n");
++    
++    String tmp, tmpCookieList;
++    for (HashMap<String, CookieMap*>::iterator it = m_managerMap.begin(); it != m_managerMap.end(); ++it) {
++
++        LOG(Network, "Saving CookieMap : %s \n", it->first.deprecatedString().ascii());
++
++        tmpCookieList = it->second->createBackupStringFromCookies();
++        if (!tmpCookieList.isEmpty()) {
++            tmp = it->first.deprecatedString().ascii();
++            tmp.append('\n');
++            
++            tmp.append(tmpCookieList);
++            tmp.append("*\n");
++            
++            ::write(cookieFile, tmp.deprecatedString().ascii(), tmp.deprecatedString().length());
++        }
++    }
++    
++    ::close(cookieFile);
++}
++
++void CookieManager::getCookiesFromFile()
++{
++    int cookieFile = ::open(m_cookieJarFileName, O_RDONLY);
++    
++    if (cookieFile == -1) {
++        LOG(Network, "Cookie file can't be opened\n");
++        return;
++    }
++    
++    // Get the file size
++    int size = lseek(cookieFile, 0, SEEK_END);
++    lseek(cookieFile, 0, SEEK_SET);
++
++    if (size > 0) {
++        char* buffer = new char[size + 1];
++    
++        if (!buffer)
++            return;
++
++        ::read(cookieFile, buffer, size);
++
++        buffer[size] = '\0';
++        
++        String cookieCollection(buffer, size);
++        String map;
++        String cookie;
++        int startOfLine = 0;
++        int endOfLine = 0;
++        int addedCookies = 0;
++        bool readCookie;
++        CookieMap* newMap;
++        Cookie* newCookie;
++        
++        // Read the entire file content
++        while (endOfLine < (int)cookieCollection.length()) {
++            // Start a new CookieMap after each '*' character
++            newMap = new CookieMap();
++            
++            // Getting the name of the map (which is the domain)
++            endOfLine = cookieCollection.find("\n", startOfLine);
++            map = cookieCollection.substring(startOfLine, endOfLine - startOfLine);
++            
++            // Adding the map to the cookieManager
++            m_managerMap.set(map, newMap);
++            
++            readCookie = true;
++            
++            // Reading all the cookies from this map
++            while (readCookie) {
++                startOfLine = endOfLine + 1;
++                endOfLine = cookieCollection.find("\n", startOfLine);
++                cookie = cookieCollection.substring(startOfLine, endOfLine - startOfLine);
++                if (cookie == "*") {
++                    readCookie = false;
++                    startOfLine = endOfLine + 1;
++                    endOfLine++;
++                } else {
++                    newCookie = new Cookie;
++                    newCookie->initCookieFromBackupString(cookie, map);
++                    addedCookies = newMap->add(*newCookie);
++                    m_count += addedCookies;
++                    delete newCookie;
++                }
++
++            } // End reading cookies from this map
++
++        } // End reading map from the file content
++
++    delete buffer;
++
++    } // End analysing the file
++       
++    ::close(cookieFile);
++    
++}
++
++void CookieManager::setCookieJar(const char* fileName)
++{
++    m_cookieJarFileName = fileName;
++}
++
++} // namespace WebCore
+Index: WebCore/platform/network/curl/CookieManager.h
+===================================================================
+--- WebCore/platform/network/curl/CookieManager.h	(revision 0)
++++ WebCore/platform/network/curl/CookieManager.h	(revision 0)
+@@ -0,0 +1,96 @@
++/*
++ * Copyright (C) 2007 Pleyo.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1.  Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ * 2.  Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ * 3.  Neither the name of Pleyo nor the names of
++ *     its contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY PLEYO AND ITS CONTRIBUTORS "AS IS" AND ANY
++ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL PLEYO OR ITS CONTRIBUTORS BE LIABLE FOR ANY
++ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "config.h"
++
++#include "Cookie.h"
++#include "KURL.h"
++#include "StringHash.h"
++#include <wtf/HashMap.h>
++
++#include <curl/curl.h>
++
++namespace WebCore {
++
++class CookieManager {
++public:
++    static CookieManager* getCookieManager();
++
++    unsigned int setCookies(const KURL& url, const KURL& policyURL, const String& value);
++    String cookies(const KURL& url);
++
++    /**
++     * Add a cookie for a host in map.
++     * @param(in) the owner host
++     * @param(in) the cookie to add
++     */
++    int add(const String& host, const Cookie& cookie);
++
++    bool respectsSecurityStandards(const KURL& url, Cookie& cookie);
++    
++    bool thisMapExists(String mapName);
++        
++    /**
++     * Ask for the cookie map related to host.
++     * @param(in) the host concerned
++     * @return a list of cookie maps containing cookies for host
++     * @return 0 if there's no cookie for host
++     */
++    HashMap<String, CookieMap*> getMapListForHost(const String& host, bool onlyOneMap = false) const;
++
++    /**
++     * Save all the cookies in a file for backup
++     * We use a text file for this.
++     */
++    void saveCookiesToFile();
++    
++    /**
++     * Load all the cookies from a file
++     * Expired cookies and previous session cookies are left behind
++     */
++    void getCookiesFromFile();
++
++    unsigned short cookiesCount();
++
++    void setCookieJar(const char*);
++
++    ~CookieManager();
++
++private:
++    CookieManager();
++
++    // Can't put reference CookieMap& in map
++    HashMap<String, CookieMap*> m_managerMap;
++
++    // Count all cookies. Cookies number is limited to 300
++    unsigned short m_count;
++
++    const char* m_cookieJarFileName;
++};
++
++} // namespace WebCore
+Index: WebCore/platform/network/curl/ResourceHandleCurl.cpp
+===================================================================
+--- WebCore/platform/network/curl/ResourceHandleCurl.cpp	(revision 28325)
++++ WebCore/platform/network/curl/ResourceHandleCurl.cpp	(working copy)
+@@ -28,6 +28,7 @@
+ #include "config.h"
+ #include "ResourceHandle.h"
+ 
++#include "CookieManager.h"
+ #include "DocLoader.h"
+ #include "NotImplemented.h"
+ #include "ResourceHandleInternal.h"
+@@ -94,4 +95,43 @@ void ResourceHandle::loadResourceSynchro
+     notImplemented();
+ }
+ 
++void ResourceHandle::setCookies()
++{
++    CookieManager* manager = CookieManager::getCookieManager();
++    KURL url = getInternal()->m_response.url();
++
++    if (manager && manager->setCookies(url, KURL(), getInternal()->m_response.httpHeaderField("Set-Cookie"))) {
++        // if a cookie was added, update the CURL cookies
++        checkAndSendCookies(url);
++        
++        // FIXME : it should be done when freeing the CookieManager
++        manager->saveCookiesToFile();
++    }
++}
++
++void ResourceHandle::checkAndSendCookies(KURL url)
++{
++    //cookies are a part of the http protocol only
++    if (!String(d->m_url).startsWith("http"))
++        return;
++
++    if (url == "")
++        url = d->m_url;
++
++    //prepare a cookie header if there are cookies related to this url.
++    String cookiePairs;
++    cookiePairs = CookieManager::getCookieManager()->cookies(url);
++
++    // We choose a max size of 81920 caracters because a cookie max size is 4096 and a domain can have at max 20 cookies so 20 * 4096 = 81920
++
++    // FIXME: if an url depends on more than one map, cookie string may be truncated
++    static char cookieChar[81920];
++    strncpy(cookieChar, cookiePairs.deprecatedString().ascii(), 81920);
++
++    if (!cookiePairs.isEmpty() && d->m_handle) {
++        printf("CURL POST Cookie : %s \n", cookieChar);
++        curl_easy_setopt(d->m_handle, CURLOPT_COOKIE, cookieChar);
++    }
++}
++
+ } // namespace WebCore
+Index: WebCore/platform/network/curl/ResourceHandleManager.cpp
+===================================================================
+--- WebCore/platform/network/curl/ResourceHandleManager.cpp	(revision 28325)
++++ WebCore/platform/network/curl/ResourceHandleManager.cpp	(working copy)
+@@ -37,6 +37,7 @@
+ #include "ResourceHandleInternal.h"
+ #include "HTTPParsers.h"
+ #include "Base64.h"
++#include "CookieManager.h"
+ 
+ #include <wtf/Vector.h>
+ 
+@@ -47,7 +48,6 @@ const double pollTimeSeconds = 0.05;
+ 
+ ResourceHandleManager::ResourceHandleManager()
+     : m_downloadTimer(this, &ResourceHandleManager::downloadTimerCallback)
+-    , m_cookieJarFileName(0)
+     , m_resourceHandleListHead(0)
+ {
+     curl_global_init(CURL_GLOBAL_ALL);
+@@ -61,13 +61,17 @@ ResourceHandleManager::~ResourceHandleMa
+ {
+     curl_multi_cleanup(m_curlMultiHandle);
+     curl_share_cleanup(m_curlShareHandle);
+-    if (m_cookieJarFileName)
+-        free(m_cookieJarFileName);
++
++    // Free the CookieManager to write cookies to file
++    delete CookieManager::getCookieManager();
+ }
+ 
+ void ResourceHandleManager::setCookieJarFileName(const char* cookieJarFileName)
+ { 
+-    m_cookieJarFileName = strdup(cookieJarFileName);
++    CookieManager* manager = CookieManager::getCookieManager();
++
++    if (manager)
++        manager->setCookieJar(strdup(cookieJarFileName));
+ }
+ 
+ ResourceHandleManager* ResourceHandleManager::sharedInstance()
+@@ -163,8 +167,27 @@ static size_t headerCallback(char* ptr, 
+             client->didReceiveResponse(job, d->m_response);
+     } else {
+         int splitPos = header.find(":");
+-        if (splitPos != -1)
+-            d->m_response.setHTTPHeaderField(header.left(splitPos), header.substring(splitPos+1).stripWhiteSpace());
++        if (splitPos != -1) {
++            d->m_response.setHTTPHeaderField(header.left(splitPos), header.substring(splitPos + 1).stripWhiteSpace());
++
++            // Handle cookie
++            if (header.contains("Set-Cookie: ", false)) {
++                int ret = header.find('\r');
++                if (ret >= 0)
++                    header.truncate(ret);
++
++                // Need to set the url if not already done
++                if (d->m_response.url().isEmpty()) {
++                    const char* hdr;
++                    curl_easy_getinfo(d->m_handle, CURLINFO_EFFECTIVE_URL, &hdr);
++                    d->m_response.setUrl(KURL(hdr));
++                }
++
++                job->setCookies();
++
++                LOG(Network, "Cookie vakue : %s !!\n", d->m_response.httpHeaderField("Set-Cookie").deprecatedString().ascii());
++            }
++        }
+     }
+ 
+     return totalSize;
+@@ -441,11 +464,6 @@ void ResourceHandleManager::startJob(Res
+     d->m_url = strdup(url.ascii());
+     curl_easy_setopt(d->m_handle, CURLOPT_URL, d->m_url);
+ 
+-    if (m_cookieJarFileName) {
+-        curl_easy_setopt(d->m_handle, CURLOPT_COOKIEFILE, m_cookieJarFileName);
+-        curl_easy_setopt(d->m_handle, CURLOPT_COOKIEJAR, m_cookieJarFileName);
+-    }
+-
+     if (job->request().httpHeaderFields().size() > 0) {
+         struct curl_slist* headers = 0;
+         HTTPHeaderMap customHeaders = job->request().httpHeaderFields();
+@@ -472,6 +490,9 @@ void ResourceHandleManager::startJob(Res
+     else if ("HEAD" == job->request().httpMethod())
+         curl_easy_setopt(d->m_handle, CURLOPT_NOBODY, TRUE);
+ 
++    // Add cookies
++    job->checkAndSendCookies();
++
+     CURLMcode ret = curl_multi_add_handle(m_curlMultiHandle, d->m_handle);
+     // don't call perform, because events must be async
+     // timeout will occur and do curl_multi_perform
+Index: WebCore/platform/network/curl/ResourceHandleManager.h
+===================================================================
+--- WebCore/platform/network/curl/ResourceHandleManager.h	(revision 28325)
++++ WebCore/platform/network/curl/ResourceHandleManager.h	(working copy)
+@@ -75,7 +75,6 @@ private:
+     Timer<ResourceHandleManager> m_downloadTimer;
+     CURLM* m_curlMultiHandle;
+     CURLSH* m_curlShareHandle;
+-    char* m_cookieJarFileName;
+     char m_curlErrorBuffer[CURL_ERROR_SIZE];
+     ResourceHandleList* m_resourceHandleListHead;
+ };
