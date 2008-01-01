@@ -1,8 +1,0 @@
-DIST service-discovery-applet-0.4.1.tar.gz 173828 RMD160 21e9b8526a738c20509c9c189c8c788b19c58c0f SHA1 4dfb282ecc4cfbc48936d055dea6c413ff632d91 SHA256 45ffb522d0a714c4e99c78c7d025a0d07b49cb7f3458cfcb08006cefb80fff78
-EBUILD service-discovery-applet-0.4.1.ebuild 918 RMD160 32f94aed79f5bdd9360889ce92546fdb5a41649c SHA1 ca3d52070a54d68bc40f4d970921befb96906743 SHA256 fdc14e9511e647ddc05fa8258897907b0d2575857970980bf2645763af0663af
-MD5 79f9b8b25a7683f6ae6936c520b63093 service-discovery-applet-0.4.1.ebuild 918
-RMD160 32f94aed79f5bdd9360889ce92546fdb5a41649c service-discovery-applet-0.4.1.ebuild 918
-SHA256 fdc14e9511e647ddc05fa8258897907b0d2575857970980bf2645763af0663af service-discovery-applet-0.4.1.ebuild 918
-MD5 1bc4b65a93182125ace44243d9578218 files/digest-service-discovery-applet-0.4.1 292
-RMD160 4571db58f49da6c56ff603cf342eb45b07517153 files/digest-service-discovery-applet-0.4.1 292
-SHA256 b030a43bd2a1ab2544d64348abb063c966628cd12cba91b75dd7c1f3a3af0740 files/digest-service-discovery-applet-0.4.1 292

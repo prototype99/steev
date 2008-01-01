@@ -5,7 +5,7 @@
 inherit gnome2
 
 DESCRIPTION="GTK+ gui for using git"
-HOMEPAGE="http://developer.imendio.com"
+HOMEPAGE="http://developer.imendio.com/projects/giggle/"
 SRC_URI="http://ftp.imendio.com/pub/imendio/giggle/src/${P}.tar.gz"
 
 LICENSE="GPL-2"
