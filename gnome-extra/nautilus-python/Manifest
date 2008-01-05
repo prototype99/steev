@@ -1,12 +1,3 @@
 AUX nautilus-python-0.4.3-py_lib_loc-fix.patch 28442 RMD160 7a4db8acdd5fafd2d2c526ea5059dc2c36e696a2 SHA1 d34e64cfdb6b22b79cff6aa09fe44916c9857f9b SHA256 4cba62211eb91230eeccdd28661b866af02c744e2dc58388d6f9b777c168e9b8
-MD5 aeb2c7f838245819b0401397627b3364 files/nautilus-python-0.4.3-py_lib_loc-fix.patch 28442
-RMD160 7a4db8acdd5fafd2d2c526ea5059dc2c36e696a2 files/nautilus-python-0.4.3-py_lib_loc-fix.patch 28442
-SHA256 4cba62211eb91230eeccdd28661b866af02c744e2dc58388d6f9b777c168e9b8 files/nautilus-python-0.4.3-py_lib_loc-fix.patch 28442
 DIST nautilus-python-0.4.3.tar.gz 325663 RMD160 d87549207575e2db6287d66a4cabb480ac829183 SHA1 41823ff5da993ec294d1d7d34471e2a3e7ffc5b1 SHA256 e697edb0ed67019700658d1de5c75b85760d98d7dd0ae74a115503fa79f81dca
 EBUILD nautilus-python-0.4.3.ebuild 766 RMD160 0c9321bb630d0da988f4af7af75718be06e3d878 SHA1 4a583485c33d2d42c956d56b743504b4fcc74daf SHA256 e74c4c014c0a0cb5bc5834ae37919eff0543020e9fdc5fc93d2913d8316e7489
-MD5 3dcd5d4c6e1aed33018fdef9044b20a1 nautilus-python-0.4.3.ebuild 766
-RMD160 0c9321bb630d0da988f4af7af75718be06e3d878 nautilus-python-0.4.3.ebuild 766
-SHA256 e74c4c014c0a0cb5bc5834ae37919eff0543020e9fdc5fc93d2913d8316e7489 nautilus-python-0.4.3.ebuild 766
-MD5 f813643e8a8d95d2572213d6d56565f3 files/digest-nautilus-python-0.4.3 265
-RMD160 055a8257282ba59ecdbfacaae1f2e7281e20d842 files/digest-nautilus-python-0.4.3 265
-SHA256 707ceca2ef8b0b2a598b3ca74e4ac6bac3ec154d425284f74611c78c62443bf6 files/digest-nautilus-python-0.4.3 265

@@ -1,8 +1,2 @@
 DIST branches-0.6-gtk-nodoka-engine-0.6.tar.gz 345861 RMD160 933c18f4949f5eefabad917bd9797d9e94e487a9 SHA1 8793940e78c1fe72eda2a116b9035e812b32c414 SHA256 99d2eb43c4e0c931784c9f7bb96bca193b24df7c4f6e4c218900bfa347c9b826
 EBUILD gtk-engines-nodoka-0.6.ebuild 534 RMD160 8ed7f5dbdb33d0c1bd5226aceab632488309ffcd SHA1 c2081e7626ec1815a6c64e99e6c29ca229ed7265 SHA256 7af23a134f3a05dc2861cb112869e5950873ad186f652ae2cfa3d674caf9da7b
-MD5 c578238eab83fdb7f4b99e63505e8790 gtk-engines-nodoka-0.6.ebuild 534
-RMD160 8ed7f5dbdb33d0c1bd5226aceab632488309ffcd gtk-engines-nodoka-0.6.ebuild 534
-SHA256 7af23a134f3a05dc2861cb112869e5950873ad186f652ae2cfa3d674caf9da7b gtk-engines-nodoka-0.6.ebuild 534
-MD5 36bbae0befb6edcdb7d2383afc45f533 files/digest-gtk-engines-nodoka-0.6 304
-RMD160 af4f5440bc212e702b201bb66e06a004a5078e49 files/digest-gtk-engines-nodoka-0.6 304
-SHA256 c70f0927b26e572b7b6b537ef77febc5075743bea84bc414d064d78e22be4bd5 files/digest-gtk-engines-nodoka-0.6 304
