@@ -39,9 +39,14 @@ src_unpack() {
 	cd "${S}"
 
 	if use gtk; then
-		eautoreconf
-		automake --add-missing
+		#eautoreconf
+		#automake --add-missing
+		./autogen.sh
 	fi
+	#This is an UGLY hack because DerivedSources does not seem to get created
+	# in 29058
+	mkdir DerivedSources
+	cp "${FILESDIR}/JSDOMExceptionConstructor.lut.h" WebCore/bindings/js/
 }
 
 src_compile_autotools() {
