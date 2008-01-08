@@ -34,6 +34,7 @@ src_unpack() {
 	# Experimental (woowoo!) inotify support... please test!
 	epatch "${FILESDIR}"/${PN}-1.0.0-inotify.patch
 	epatch "${FILESDIR}"/${PN}-1.1.2-get-effective-id.patch
+	epatch "${FILESDIR}"/${PN}-1.1.2-no-abort.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-NULL-check-to-babysitter.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-missing-oom-checks.patch
 	epatch "${FILESDIR}"/fdo-bugs/${PN}-add-missing-va_end.patch
