@@ -21,11 +21,6 @@ RDEPEND="x11-libs/gtk+
 DEPEND="${RDEPEND}
 	dev-util/git"
 
-pkg_setup() {
-	built_with_use net-libs/webkit gtk \
-		|| die "${PN} needs net-libs/webkit w/ USE=\"gtk\"."
-}
-
 src_install() {
 	emake DESTDIR="${D}" install || die "emake install failed."
 
