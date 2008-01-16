@@ -1,0 +1,43 @@
+diff -up wpa_supplicant-0.5.7/ctrl_iface_dbus.c.signal-leak-fix wpa_supplicant-0.5.7/ctrl_iface_dbus.c
+--- wpa_supplicant-0.5.7/ctrl_iface_dbus.c.signal-leak-fix	2007-12-06 18:10:22.000000000 -0500
++++ wpa_supplicant-0.5.7/ctrl_iface_dbus.c	2007-12-06 18:11:38.000000000 -0500
+@@ -649,6 +649,7 @@ void wpa_supplicant_dbus_notify_scan_res
+ 		return;
+ 	}
+ 	dbus_connection_send(iface->con, signal, NULL);
++	dbus_message_unref (signal);
+ }
+ 
+ 
+@@ -666,7 +667,7 @@ void wpa_supplicant_dbus_notify_state_ch
+ 					     wpa_states old_state)
+ {
+ 	struct ctrl_iface_dbus_priv *iface;
+-	DBusMessage *signal;
++	DBusMessage *signal = NULL;
+ 	const char *path;
+ 	const char *new_state_str, *old_state_str;
+ 
+@@ -711,7 +712,7 @@ void wpa_supplicant_dbus_notify_state_ch
+ 		wpa_printf(MSG_ERROR,
+ 		           "wpa_supplicant_dbus_notify_state_change[dbus]: "
+ 		           "couldn't convert state strings.");
+-		return;
++		goto out;
+ 	}
+ 
+ 	if (!dbus_message_append_args(signal,
+@@ -724,8 +725,13 @@ void wpa_supplicant_dbus_notify_state_ch
+ 		           "wpa_supplicant_dbus_notify_state_change[dbus]: "
+ 		           "not enough memory to construct state change "
+ 		           "signal.");
++		goto out;
+ 	}
++
+ 	dbus_connection_send(iface->con, signal, NULL);
++
++out:
++	dbus_message_unref (signal);
+ }
+ 
+ 

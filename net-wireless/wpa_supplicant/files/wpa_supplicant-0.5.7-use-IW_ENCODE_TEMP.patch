@@ -1,0 +1,28 @@
+Index: wpa_supplicant-0.4.8/driver_wext.c
+===================================================================
+--- wpa_supplicant-0.4.8.orig/driver_wext.c	2006-07-13 11:23:05.000000000 +0200
++++ wpa_supplicant-0.4.8/driver_wext.c	2006-07-13 11:23:57.000000000 +0200
+@@ -1280,6 +1280,7 @@ static int wpa_driver_wext_set_key_ext(v
+ 	memset(&iwr, 0, sizeof(iwr));
+ 	strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+ 	iwr.u.encoding.flags = key_idx + 1;
++	iwr.u.encoding.flags |= IW_ENCODE_TEMP;
+ 	if (alg == WPA_ALG_NONE)
+ 		iwr.u.encoding.flags |= IW_ENCODE_DISABLED;
+ 	iwr.u.encoding.pointer = (caddr_t) ext;
+@@ -1401,6 +1402,7 @@ int wpa_driver_wext_set_key(void *priv, 
+ 	memset(&iwr, 0, sizeof(iwr));
+ 	strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+ 	iwr.u.encoding.flags = key_idx + 1;
++	iwr.u.encoding.flags |= IW_ENCODE_TEMP;
+ 	if (alg == WPA_ALG_NONE)
+ 		iwr.u.encoding.flags |= IW_ENCODE_DISABLED;
+ 	iwr.u.encoding.pointer = (caddr_t) key;
+@@ -1415,6 +1417,7 @@ int wpa_driver_wext_set_key(void *priv, 
+ 		memset(&iwr, 0, sizeof(iwr));
+ 		strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+ 		iwr.u.encoding.flags = key_idx + 1;
++		iwr.u.encoding.flags |= IW_ENCODE_TEMP;
+ 		iwr.u.encoding.pointer = (caddr_t) NULL;
+ 		iwr.u.encoding.length = 0;
+ 		if (ioctl(drv->ioctl_sock, SIOCSIWENCODE, &iwr) < 0) {

@@ -1,0 +1,14 @@
+--- wpa_supplicant-0.4.8/wpa_supplicant.c.timeout	2006-03-03 22:26:13.000000000 -0500
++++ wpa_supplicant-0.4.8/wpa_supplicant.c	2006-03-03 22:26:45.000000000 -0500
+@@ -1252,9 +1252,9 @@
+ 		/* Timeout for IEEE 802.11 authentication and association */
+ 		int timeout;
+ 		if (assoc_failed)
+-			timeout = 5;
++			timeout = 15;
+ 		else if (wpa_s->conf->ap_scan == 1)
+-			timeout = 10;
++			timeout = 15;
+ 		else
+ 			timeout = 60;
+ 		wpa_supplicant_req_auth_timeout(wpa_s, timeout, 0);

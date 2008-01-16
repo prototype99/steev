@@ -1,0 +1,13 @@
+Index: wpa_supplicant-0.4.8/driver_wext.c
+===================================================================
+--- wpa_supplicant-0.4.8.orig/driver_wext.c
++++ wpa_supplicant-0.4.8/driver_wext.c
+@@ -1415,7 +1415,7 @@ int wpa_driver_wext_set_key(void *priv, 
+ 		memset(&iwr, 0, sizeof(iwr));
+ 		strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+ 		iwr.u.encoding.flags = key_idx + 1;
+-		iwr.u.encoding.pointer = (caddr_t) key;
++		iwr.u.encoding.pointer = (caddr_t) NULL;
+ 		iwr.u.encoding.length = 0;
+ 		if (ioctl(drv->ioctl_sock, SIOCSIWENCODE, &iwr) < 0) {
+ 			perror("ioctl[SIOCSIWENCODE] (set_tx)");

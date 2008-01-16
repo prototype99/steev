@@ -1,0 +1,75 @@
+--- wpa_supplicant-0.5.7/main.c.debugfile	2007-07-30 21:48:35.000000000 -0400
++++ wpa_supplicant-0.5.7/main.c	2007-07-30 22:12:06.000000000 -0400
+@@ -45,7 +45,12 @@ static void usage(void)
+ 	       "[-p<driver_param>] \\\n"
+ 	       "        [-b<br_ifname> [-N -i<ifname> -c<conf> [-C<ctrl>] "
+ 	       "[-D<driver>] \\\n"
+-	       "        [-p<driver_param>] [-b<br_ifname>] ...]\n"
++	       "        [-p<driver_param>] [-b<br_ifname>] ...] "
++#ifdef CONFIG_DEBUG_FILE
++	       "[-f] \\\n"
++#else
++	       "\n"
++#endif
+ 	       "\n"
+ 	       "drivers:\n",
+ 	       wpa_supplicant_version, wpa_supplicant_license);
+@@ -65,6 +70,9 @@ static void usage(void)
+ 	       "  -i = interface name\n"
+ 	       "  -d = increase debugging verbosity (-dd even more)\n"
+ 	       "  -D = driver name\n"
++#ifdef CONFIG_DEBUG_FILE
++	       "  -f = Log output to /var/log/wpa_supplicant.log\n"
++#endif
+ 	       "  -g = global ctrl_interface\n"
+ 	       "  -K = include keys (passwords, etc.) in debug output\n"
+ 	       "  -t = include timestamp in debug messages\n"
+@@ -143,7 +151,7 @@ int main(int argc, char *argv[])
+ 	wpa_supplicant_fd_workaround();
+ 
+ 	for (;;) {
+-		c = getopt(argc, argv, "b:Bc:C:D:dg:hi:KLNp:P:qtuvwW");
++		c = getopt(argc, argv, "b:Bc:C:D:dfg:hi:KLNp:P:qtuvwW");
+ 		if (c < 0)
+ 			break;
+ 		switch (c) {
+@@ -172,6 +180,11 @@ int main(int argc, char *argv[])
+ 			params.wpa_debug_level--;
+ 			break;
+ #endif /* CONFIG_NO_STDOUT_DEBUG */
++#ifdef CONFIG_DEBUG_FILE
++		case 'f':
++			params.wpa_debug_use_file = 1;
++			break;
++#endif
+ 		case 'g':
+ 			params.ctrl_interface = optarg;
+ 			break;
+--- wpa_supplicant-0.5.7/common.c.debugfile	2007-07-30 21:39:40.000000000 -0400
++++ wpa_supplicant-0.5.7/common.c	2007-07-30 22:11:11.000000000 -0400
+@@ -354,11 +354,8 @@ int wpa_debug_open_file(void)
+ #ifdef _WIN32
+ 	os_snprintf(fname, sizeof(fname), "\\Temp\\wpa_supplicant-log-%d.txt",
+ 		    count++);
+-#else /* _WIN32 */
+-	os_snprintf(fname, sizeof(fname), "/tmp/wpa_supplicant-log-%d.txt",
+-		    count++);
+ #endif /* _WIN32 */
+-	out_file = fopen(fname, "w");
++	out_file = fopen("/var/log/wpa_supplicant.log", "a");
+ 	return out_file == NULL ? -1 : 0;
+ #else /* CONFIG_DEBUG_FILE */
+ 	return 0;
+--- wpa_supplicant-0.5.7/Makefile.debugfile	2007-07-30 21:44:14.000000000 -0400
++++ wpa_supplicant-0.5.7/Makefile	2007-07-30 21:44:46.000000000 -0400
+@@ -744,6 +744,10 @@ ifndef LDO
+ LDO=$(CC)
+ endif
+ 
++ifdef CONFIG_DEBUG_FILE
++CFLAGS += -DCONFIG_DEBUG_FILE
++endif
++
+ dynamic_eap_methods: $(EAPDYN)
+ 
+ wpa_supplicant: .config $(OBJS)
