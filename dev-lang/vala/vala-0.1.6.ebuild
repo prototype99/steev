@@ -17,11 +17,11 @@ RDEPEND=">=dev-libs/glib-2.10.0"
 DEPEND="${RDEPEND}
 	dev-util/pkgconfig"
 
-src_unpack() {
-	unpack ${A}
-	cd "${S}/gen-project"
-	epatch "${FILESDIR}/${PN}-automake-paths.patch"
-}
+#src_unpack() {
+#	unpack ${A}
+#	cd "${S}/gen-project"
+#	epatch "${FILESDIR}/${PN}-automake-paths.patch"
+#}
 
 src_compile() {
 	econf --enable-vapigen --enable-gen-project
