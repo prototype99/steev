@@ -1,0 +1,12 @@
+diff -ruN NetworkManager-0.7.0.orig/src/NetworkManager.conf NetworkManager-0.7.0/src/NetworkManager.conf
+--- NetworkManager-0.7.0.orig/src/NetworkManager.conf	2008-01-22 01:11:34.000000000 -0600
++++ NetworkManager-0.7.0/src/NetworkManager.conf	2008-01-22 01:11:55.000000000 -0600
+@@ -11,7 +11,7 @@
+                 <allow send_destination="org.freedesktop.NetworkManager.PPP"/>
+                 <allow send_interface="org.freedesktop.NetworkManager.PPP"/>
+         </policy>
+-        <policy at_console="true">
++        <policy group="plugdev">
+                 <allow send_destination="org.freedesktop.NetworkManager"/>
+                 <allow send_interface="org.freedesktop.NetworkManager"/>
+         </policy>

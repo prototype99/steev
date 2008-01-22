@@ -73,7 +73,8 @@ src_unpack () {
 	# Fix up the dbus conf file to use plugdev group
 	epatch "${FILESDIR}/${PN}-0.6.5-confchanges.patch"
 	# Add some stuff for dealing with hal 0.5.10
-	epatch "${FILESDIR}/hal_killswitch-2.patch"
+	# Not yet working...
+	#epatch "${FILESDIR}/hal_killswitch-2.patch"
 }
 
 src_install() {

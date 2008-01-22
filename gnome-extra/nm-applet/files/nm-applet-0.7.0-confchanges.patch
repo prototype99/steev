@@ -1,0 +1,12 @@
+diff -ruN nm-applet-0.7.0.orig/nm-applet.conf nm-applet-0.7.0/nm-applet.conf
+--- nm-applet-0.7.0.orig/nm-applet.conf	2008-01-22 01:24:58.000000000 -0600
++++ nm-applet-0.7.0/nm-applet.conf	2008-01-22 01:25:23.000000000 -0600
+@@ -11,7 +11,7 @@
+ 		<!-- Only root can get secrets -->
+ 		<allow send_interface="org.freedesktop.NetworkManagerSettings.Secrets"/>
+ 	</policy>
+-	<policy at_console="true">
++	<policy group="plugdev">
+ 		<allow own="org.freedesktop.NetworkManagerUserSettings"/>
+ 
+ 		<allow send_destination="org.freedesktop.NetworkManagerUserSettings"/>

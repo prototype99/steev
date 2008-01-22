@@ -8,7 +8,7 @@ MY_PV=${PV/_*/}
 
 DESCRIPTION="Gnome applet for NetworkManager."
 HOMEPAGE="http://people.redhat.com/dcbw/NetworkManager/"
-SRC_URI="http://ubersekret.com/distfiles/nm-applet-${PV}.tar.gz"
+SRC_URI="http://dev.gentoo.org/~steev/distfiles/nm-applet-${PV}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -38,7 +38,7 @@ DEPEND="${RDEPEND}
 
 DOCS="AUTHORS COPYING ChangeLog INSTALL NEWS README"
 USE_DESTDIR="1"
-
+MAKEOPTS="${MAKEOPTS} -j1"
 G2CONF="${G2CONF} \
 	--disable-more-warnings \
 	--localstatedir=/var \
@@ -50,7 +50,7 @@ S=${WORKDIR}/${PN}-${MY_PV}
 src_unpack() {
 	unpack ${A}
 	cd ${S}
-	epatch ${FILESDIR}/${PN}-0.6.5-confchanges.patch
+	epatch ${FILESDIR}/${PN}-0.7.0-confchanges.patch
 }
 
 pkg_postinst() {
