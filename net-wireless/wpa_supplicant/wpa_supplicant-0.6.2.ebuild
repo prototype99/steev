@@ -170,7 +170,7 @@ src_install() {
 	newexe "${FILESDIR}"/wpa_cli.sh wpa_cli.sh
 	insinto /etc/wpa_supplicant/
 	newins "${FILESDIR}"/wpa_supplicant.conf wpa_supplicant.conf
-
+	
 	dodoc ChangeLog ../COPYING eap_testing.txt README todo.txt
 	newdoc wpa_supplicant.conf wpa_supplicant.conf
 
@@ -194,6 +194,9 @@ src_install() {
 		newins dbus-wpa_supplicant.conf wpa_supplicant.conf
 		insinto /usr/share/dbus-1/system-services/
 		newins "${FILESDIR}/fi.epitest.hostap.WPASupplicant.service" "fi.epitest.hostap.WPASupplicant.service"
+		insinto /etc/wpa_supplicant
+		newins "${FILESDIR}"/wpa_supplicant.conf.dbus wpa_supplicant.conf
+		keepdir /var/run/wpa_supplicant
 	fi
 }
 
