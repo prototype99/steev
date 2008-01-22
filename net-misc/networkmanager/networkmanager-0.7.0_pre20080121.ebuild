@@ -54,8 +54,8 @@ src_unpack () {
 	epatch ${FILESDIR}/${PN}-resolvconf-perms.patch
 	# Fix up the dbus conf file to use plugdev group
 	epatch ${FILESDIR}/${PN}-0.7.0-confchanges.patch
-	# Update the includes, perhaps this will allow us to work with wireless...
-	#epatch ${FILESDIR}/${PN}-update-includes.patch
+	# Issues with WPA here... 
+	epatch ${FILESDIR}/${PN}-0.7.0-element_id.patch
 }
 
 src_install() {

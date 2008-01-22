@@ -1,0 +1,19 @@
+diff -ruN networkmanager.orig/src/wpa.c networkmanager/src/wpa.c
+--- networkmanager.orig/src/wpa.c	2008-01-22 12:22:10.000000000 -0600
++++ networkmanager/src/wpa.c	2008-01-22 12:28:51.000000000 -0600
+@@ -214,6 +214,7 @@
+ 	    hdr->len != wpa_ie_len - 2 ||
+ 	    memcmp(hdr->oui, WPA_OUI_TYPE, WPA_SELECTOR_LEN) != 0 ||
+ 	    WPA_GET_LE16(hdr->version) != WPA_VERSION) {
++	    	nm_debug ("Element ID: 0x%02x",hdr->elem_id);
+ 		nm_debug ("%s: malformed ie or unknown version",
+ 			   __func__);
+ 		return -1;
+@@ -323,6 +324,7 @@
+ 	if (hdr->elem_id != WPA_RSN_INFO_ELEM ||
+ 	    hdr->len != rsn_ie_len - 2 ||
+ 	    WPA_GET_LE16(hdr->version) != RSN_VERSION) {
++	    	nm_debug ("Element ID: 0x%02x", hdr->elem_id);
+ 		nm_debug ("%s: malformed ie or unknown version",
+ 			   __func__);
+ 		return -1;
