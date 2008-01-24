@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit autotools
+inherit autotools flag-o-matic
 
 DESCRIPTION="Open source web browser engine"
 HOMEPAGE="http://www.webkit.org/"
@@ -35,7 +35,7 @@ DEPEND="${RDEPEND}
 src_unpack() {
 	unpack ${A}
 	cd "${S}"
-	./autogen.sh
+	eautoreconf
 }
 
 src_compile() {
@@ -50,6 +50,9 @@ src_compile() {
 	if use gstreamer ; then
 		myconf="${myconf} --enable-video"
 	fi
+	
+	# Doesn't build with as-needed
+	filter-ldflags -Wl,--as-needed
 
 	econf ${myconf} || die "configure failed"
 	emake -j1 || die "emake failed"
