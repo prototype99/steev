@@ -1,6 +1,6 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-misc/networkmanager/networkmanager-0.6.5_p20070823.ebuild,v 1.5 2007/09/16 09:16:20 maekke Exp $
+# $Header: $
 
 inherit gnome2 eutils
 
@@ -9,19 +9,21 @@ MY_P=${P/networkmanager/NetworkManager}
 
 DESCRIPTION="Network configuration and management in an easy way. Desktop environment independent."
 HOMEPAGE="http://www.gnome.org/projects/NetworkManager/"
-#http://ftp.gnome.org/pub/gnome/sources/NetworkManager/0.6/
-SRC_URI="mirror://gentoo/${MY_P}.tar.gz
+# Snapshot from SVN, hosted by steev
+SRC_URI="http://steev.net/files/distfiles/${MY_P}.tar.gz
 	mirror://gentoo/${PN}-0.6.5_p20070823-updatedbackend.patch.bz2"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="amd64 ppc x86"
+KEYWORDS="~amd64 ~ppc ~x86"
 IUSE="crypt doc gnome"
 
+# Yes, I know that configure will accept libnl 1.0-pre8, however we only have
+# 1.1 in the tree, therefore dep on it.
 RDEPEND=">=sys-apps/dbus-0.60
-	>=sys-apps/hal-0.5
+	>=sys-apps/hal-0.5.10
 	sys-apps/iproute2
-	>=dev-libs/libnl-1.0_pre6
+	>=dev-libs/libnl-1.1
 	>=net-misc/dhcdbd-1.4
 	>=net-wireless/wireless-tools-28_pre9
 	>=net-wireless/wpa_supplicant-0.4.8
@@ -48,8 +50,7 @@ G2CONF="${G2CONF} \
 	--disable-more-warnings \
 	--localstatedir=/var \
 	--with-distro=gentoo \
-	--with-dbus-sys=/etc/dbus-1/system.d \
-	--enable-notification-icon"
+	--with-dbus-sys=/etc/dbus-1/system.d"
 
 S=${WORKDIR}/NetworkManager-0.6.5
 

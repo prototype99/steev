@@ -9,19 +9,19 @@ MY_PV=${PV/_*/}
 DESCRIPTION="Gnome applet for NetworkManager."
 HOMEPAGE="http://people.redhat.com/dcbw/NetworkManager/"
 #SRC_URI="http://ftp.gnome.org/pub/gnome/sources/network-manager-applet/0.6/network-manager-applet-0.6.5.tar.gz"
-SRC_URI="http://dev.gentoo.org/~steev/files/${P}.tar.gz"
+SRC_URI="http://steev.net/files/distfiles/${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~ppc ~x86"
 IUSE="debug doc libnotify"
 
 RDEPEND=">=sys-apps/dbus-0.60
 	>=sys-apps/hal-0.5
 	sys-apps/iproute2
-	>=dev-libs/libnl-1.0_pre6
+	>=dev-libs/libnl-1.1
 	>=net-misc/dhcdbd-1.4
-	net-misc/networkmanager
+	>=net-misc/networkmanager-0.6.5_p20080130
 	>=net-wireless/wireless-tools-28_pre9
 	>=net-wireless/wpa_supplicant-0.4.8
 	>=dev-libs/glib-2.10
