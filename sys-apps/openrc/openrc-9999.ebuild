@@ -24,7 +24,8 @@ RDEPEND="virtual/init
 		kernel_FreeBSD? ( sys-process/fuser-bsd )
 		ncurses? ( sys-libs/ncurses )
 		pam? ( virtual/pam )
-		!<sys-apps/baselayout-2.0.0"
+		!<sys-apps/baselayout-2.0.0
+		!<sys-fs/udev-118-r2"
 DEPEND="virtual/os-headers"
 
 pkg_setup() {
@@ -37,15 +38,15 @@ pkg_setup() {
 	if use kernel_linux; then
 		MAKE_ARGS="${MAKE_ARGS} OS=Linux"
 		brand="Linux"
-	else
-		MAKE_ARGS="${MAKE_ARGS} OS=BSD"
-		use kernel_FreeBSD && brand="FreeBSD"
+	elif use kernel_FreeBSD; then
+		MAKE_ARGS="${MAKE_ARGS} OS=FreeBSD SUBOS=BSD"
+		brand="FreeBSD"
 	fi
 	[ -n "${brand}" ] && MAKE_ARGS="${MAKE_ARGS} BRANDING=Gentoo/${brand}"
 
-	use ncurses && MAKE_ARGS="${MAKE_ARGS} TERMCAP=ncurses"
+	use ncurses && MAKE_ARGS="${MAKE_ARGS} MKTERMCAP=ncurses"
 	if use pam; then
-		MAKE_ARGS="${MAKE_ARGS} PAM=pam"
+		MAKE_ARGS="${MAKE_ARGS} MKPAM=pam"
 		if use static; then
 			ewarn "OpenRC cannot be built statically with PAM"
 			elog "not building statically"
@@ -69,6 +70,10 @@ src_compile() {
 src_install() {
 	emake ${MAKE_ARGS} DESTDIR="${D}" install || die
 
+	# Portage likes to remove our mount points for the state dir
+	keepdir /"${LIBDIR}"/rc/init.d
+	keepdir /"${LIBDIR}"/rc/tmp
+
 	# Backup our default runlevels
 	dodir /usr/share/"${PN}"
 	mv "${D}/etc/runlevels" "${D}/usr/share/${PN}"
@@ -78,11 +83,7 @@ src_install() {
 		sed -i -e '/^unicode=/s:NO:YES:' "${D}"/etc/rc.conf
 	fi
 
-	# Fix portage bitching about libs and symlinks
-	rm "${D}"/usr/"${LIBDIR}"/libeinfo.so
-	rm "${D}"/usr/"${LIBDIR}"/librc.so
-	ln -s libeinfo.so.1 "${D}"/"${LIBDIR}"/libeinfo.so
-	ln -s librc.so.1 "${D}"/"${LIBDIR}"/librc.so
+	# Fix portage bitching
 	gen_usr_ldscript libeinfo.so
 	gen_usr_ldscript librc.so
 }
@@ -92,12 +93,14 @@ pkg_preinst() {
 	# so handle upgraders
 	if ! has_version sys-apps/openrc; then
 		local x= xtra=
-		use kernel_linux && xtra="${xtra} procfs sysctl"
+		use kernel_linux && xtra="${xtra} mtab procfs sysctl"
 		use kernel_FreeBSD && xtra="${xtra} savecore dumpon"
-		for x in swap ${xtra}; do
+		for x in fsck root swap ${xtra}; do
 			[ -e "${ROOT}"etc/runlevels/boot/"${x}" ] && continue
 			ln -snf /etc/init.d/"${x}" "${ROOT}"etc/runlevels/boot/"${x}"
 		done
+
+		# We should also remove checkfs and checkroot
 	fi
 
 	# Upgrade out state for baselayout-1 users
@@ -121,8 +124,8 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	# Make our runlevels if they don't exist
-	if [ ! -e "${ROOT}"etc/runlevels ]; then
+	# Make our runlevels if they don't exist or we're a development version.
+	if [ ! -e "${ROOT}"etc/runlevels -o "${PV}" = "9999" ]; then
 		einfo "Copying across default runlevels"
 		cp -RPp "${ROOT}"usr/share/"${PN}"/runlevels "${ROOT}"/etc
 	fi
@@ -132,6 +135,6 @@ pkg_postinst() {
 		ewarn "This has been deprecated in favour of /etc/conf.d/modules"
 	fi
 
-	einfo "You should now update all files in /etc, using etc-update"
-	einfo "or equivalent before restarting any services or this host."
+	elog "You should now update all files in /etc, using etc-update"
+	elog "or equivalent before restarting any services or this host."
 }
