@@ -1,6 +1,6 @@
 # Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-wireless/wpa_supplicant/wpa_supplicant-0.6.1.ebuild,v 1.1 2008/01/08 01:42:20 rbu Exp $
+# $Header: $
 
 inherit eutils toolchain-funcs
 
@@ -30,8 +30,6 @@ RDEPEND="dbus? ( sys-apps/dbus )
 		gnutls? ( net-libs/gnutls )
 		!ssl? ( !gnutls? ( dev-libs/libtommath ) )"
 
-S="${WORKDIR}/${P}/${PN}"
-
 pkg_setup() {
 	if use qt3 && use qt4; then
 		einfo "You have USE=\"qt3 qt4\" selected, defaulting to USE=\"qt4\""
@@ -52,7 +50,7 @@ src_unpack() {
 	# net/bpf.h needed for net-libs/libpcap on Gentoo FreeBSD
 	sed -i \
 		-e "s:\(#include <pcap\.h>\):#include <net/bpf.h>\n\1:" \
-		../src/l2_packet/l2_packet_freebsd.c || die
+		l2_packet_freebsd.c || die
 
 	# toolchain setup
 	echo "CC = $(tc-getCC)" > .config
@@ -170,8 +168,8 @@ src_install() {
 	newexe "${FILESDIR}"/wpa_cli.sh wpa_cli.sh
 	insinto /etc/wpa_supplicant/
 	newins "${FILESDIR}"/wpa_supplicant.conf wpa_supplicant.conf
-	
-	dodoc ChangeLog ../COPYING eap_testing.txt README todo.txt
+
+	dodoc ChangeLog COPYING eap_testing.txt README todo.txt
 	newdoc wpa_supplicant.conf wpa_supplicant.conf
 
 	doman doc/docbook/*.8
@@ -192,10 +190,8 @@ src_install() {
 	if use dbus ; then
 		insinto /etc/dbus-1/system.d
 		newins dbus-wpa_supplicant.conf wpa_supplicant.conf
-		insinto /usr/share/dbus-1/system-services/
-		newins "${FILESDIR}/fi.epitest.hostap.WPASupplicant.service" "fi.epitest.hostap.WPASupplicant.service"
-		insinto /etc/wpa_supplicant
-		newins "${FILESDIR}"/wpa_supplicant.conf.dbus wpa_supplicant.conf
+		insinto /usr/share/dbus-1/system-services
+		newins dbus-wpa_supplicant.service 'fi.epitest.hostap.WPASupplicant.service'
 		keepdir /var/run/wpa_supplicant
 	fi
 }
