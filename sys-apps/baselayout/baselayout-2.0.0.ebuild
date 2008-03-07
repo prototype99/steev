@@ -9,11 +9,11 @@ SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~ppc ~ppc64 ~sh ~sparc ~sparc-fbsd ~x86 ~x86-fbsd"
 IUSE="bootstrap build kernel_linux kernel_FreeBSD"
 
+PDEPEND="sys-apps/openrc"
 RDEPEND="!<net-misc/dhcpcd-2.0.0
 		!<sys-apps/baselayout-2.0.0"
-DEPEND="virtual/os-headers
-		sys-apps/openrc"
-PDEPEND="sys-apps/openrc"
+DEPEND="virtual/os-headers"
+PROVIDE="virtual/baselayout"
 
 make_opts() {
 	local libdir="lib"

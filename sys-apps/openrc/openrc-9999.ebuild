@@ -25,8 +25,11 @@ RDEPEND="virtual/init
 		ncurses? ( sys-libs/ncurses )
 		pam? ( virtual/pam )
 		!<sys-apps/baselayout-2.0.0
+		>=sys-apps/baselayout-2.0.0
 		!<sys-fs/udev-118-r2"
-DEPEND="virtual/os-headers"
+DEPEND="virtual/os-headers
+		!<sys-apps/baselayout-2.0.0
+		>=sys-apps/baselayout-2.0.0"
 
 pkg_setup() {
 	LIBDIR="lib"
@@ -42,7 +45,7 @@ pkg_setup() {
 		MAKE_ARGS="${MAKE_ARGS} OS=FreeBSD SUBOS=BSD"
 		brand="FreeBSD"
 	fi
-	[ -n "${brand}" ] && MAKE_ARGS="${MAKE_ARGS} BRANDING=Gentoo/${brand}"
+	[ -n "${brand}" ] && MAKE_ARGS="${MAKE_ARGS} BRANDING=Gentoo\040${brand}"
 
 	use ncurses && MAKE_ARGS="${MAKE_ARGS} MKTERMCAP=ncurses"
 	if use pam; then
@@ -94,7 +97,7 @@ pkg_preinst() {
 	if ! has_version sys-apps/openrc; then
 		local x= xtra=
 		use kernel_linux && xtra="${xtra} mtab procfs sysctl"
-		use kernel_FreeBSD && xtra="${xtra} savecore dumpon"
+		use kernel_FreeBSD && xtra="${xtra} dumpon savecore"
 		for x in fsck root swap ${xtra}; do
 			[ -e "${ROOT}"etc/runlevels/boot/"${x}" ] && continue
 			ln -snf /etc/init.d/"${x}" "${ROOT}"etc/runlevels/boot/"${x}"
@@ -124,6 +127,11 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
+	# Remove old baselayout links
+	rm -f "${ROOT}"etc/runlevels/boot/checkfs \
+		"${ROOT}"etc/runlevels/boot/checkroot \
+		"${ROOT}"etc/runlevels/boot/rmnologin
+
 	# Make our runlevels if they don't exist or we're a development version.
 	if [ ! -e "${ROOT}"etc/runlevels -o "${PV}" = "9999" ]; then
 		einfo "Copying across default runlevels"
