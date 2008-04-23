@@ -7,7 +7,7 @@ inherit eutils
 DESCRIPTION="Vala is a new programming language that aims to bring modern programming language features to GNOME developers without imposing any additional runtime requirements and without using a different ABI compared to applications and libraries written in C."
 HOMEPAGE="http://vala.paldo.org"
 #SRC_URI="http://www.paldo.org/vala/${P}.tar.bz2"
-SRC_URI="http://ftp.gnome.org/pub/GNOME/sources/vala/0.2/${P}.tar.bz2"
+SRC_URI="http://ftp.gnome.org/pub/GNOME/sources/vala/0.3/${P}.tar.bz2"
 
 LICENSE="LGPL-2"
 SLOT="0"
