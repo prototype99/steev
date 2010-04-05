@@ -1,10 +1,10 @@
-# Copyright 1999-2007 Gentoo Foundation
+# Copyright 1999-2010 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
 inherit gnome2
 
-DESCRIPTION="Cairo Composite Manager is a versatile and extensible composite manager which use cairo for rendering."
+DESCRIPTION="Cairo Composite Manager is a versatile and extensible composite manager which uses cairo for rendering."
 HOMEPAGE="http://cairo-compmgr.tuxfamily.org/"
 SRC_URI="http://download.tuxfamily.org/ccm/cairo-compmgr/${P}.tar.gz"
 
