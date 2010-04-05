@@ -4,7 +4,7 @@
 
 inherit gnome2
 
-DESCRIPTION="Cairo Composite Manager is a versatile and extensible composite manager which uses cairo for rendering."
+DESCRIPTION="Cairo Composite Manager is a versatile and extensible composite manager using cairo for rendering."
 HOMEPAGE="http://cairo-compmgr.tuxfamily.org/"
 SRC_URI="http://download.tuxfamily.org/ccm/cairo-compmgr/${P}.tar.gz"
 
