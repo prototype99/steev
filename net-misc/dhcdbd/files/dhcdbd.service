@@ -1,4 +1,0 @@
-[D-Bus Service]
-Name=com.redhat.dhcp
-Exec=/sbin/dhcdbd --system
-User=root
