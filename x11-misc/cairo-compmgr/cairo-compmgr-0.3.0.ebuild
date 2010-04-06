@@ -19,7 +19,8 @@ RDEPEND="gnome-base/gconf
 	>=x11-libs/cairo-1.4.10
 	x11-libs/libXext
 	x11-libs/libXdamage
-	x11-libs/libXcomposite"
-DEPEND="${RDEPEND}"
+	x11-libs/libXcomposite
+	>=dev-lang/vala-0.7.10"
+	DEPEND="${RDEPEND}"
 
 G2CONF="${G2CONF} --enable-gconf"
