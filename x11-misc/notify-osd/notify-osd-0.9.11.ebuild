@@ -15,7 +15,8 @@ LICENSE="GPL-3"
 SLOT="0"
 
 KEYWORDS="~amd64 ~arm ~x86"
-DEPEND="!x11-misc/notification-daemon
+RDEPEND="!x11-misc/notification-daemon
 	sys-apps/dbus
+	x11-libs/libnotify
 	>=x11-libs/gtk+-2.14"
-RDEPEND="${DEPEND}"
+DEPEND="${RDEPEND}"
