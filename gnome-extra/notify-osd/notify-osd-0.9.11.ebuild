@@ -14,7 +14,7 @@ SRC_URI="http://launchpad.net/notify-osd/trunk/${PV}/+download/${P}.tar.gz"
 LICENSE="GPL-3"
 SLOT="0"
 
-KEYWORDS="~x86"
+KEYWORDS="~amd64 ~arm ~x86"
 DEPEND="!x11-misc/notification-daemon
 	sys-apps/dbus
 	>=x11-libs/gtk+-2.14"
