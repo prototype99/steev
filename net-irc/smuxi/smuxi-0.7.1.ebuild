@@ -19,10 +19,10 @@ RDEPEND=">=dev-lang/mono-2.0
 	>=dev-dotnet/smartirc4net-0.4.5.1
 	>=dev-dotnet/nini-1.1.0-r2
 	>=dev-dotnet/log4net-1.2.10-r2
-	>=dev-dotnet/gtk-sharp-2.12
+	gnome? ( >=dev-dotnet/gtk-sharp-2.12
 	>=dev-dotnet/gconf-sharp-2.12
 	>=dev-dotnet/glade-sharp-2.12
-	>=dev-dotnet/glib-sharp-2.12"
+	>=dev-dotnet/glib-sharp-2.12 )"
 DEPEND="${RDEPEND}
 	>=dev-util/intltool-0.25
 	>=sys-devel/gettext-0.17
@@ -33,7 +33,7 @@ src_configure() {
 		-i 	"${S}"/lib/Twitterizer.Framework/Makefile.{in,am}
 	econf	--disable-dependency-tracking	\
 		--enable-engine-irc		\
-		--enable-frontend-gnome
+		$(use_enable gnome frontend-gnome)
 }
 
 src_install() {
