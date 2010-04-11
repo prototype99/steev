@@ -12,7 +12,7 @@ HOMEPAGE="http://www.gnome.org/projects/nautilus/"
 
 LICENSE="GPL-2 LGPL-2 FDL-1.1"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~hppa ~sh ~x86 ~x86-fbsd ~x86-interix ~amd64-linux ~x86-linux"
+KEYWORDS=""
 IUSE="doc gnome xmp"
 
 RDEPEND=">=dev-libs/glib-2.24.0
