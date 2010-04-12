@@ -4,7 +4,7 @@
 
 EAPI=2
 
-inherit eutils multilib flag-o-matic
+inherit autotools eutils multilib flag-o-matic
 
 DESCRIPTION="A message bus system, a simple way for applications to talk to each other"
 HOMEPAGE="http://dbus.freedesktop.org/"
@@ -39,6 +39,10 @@ src_prepare() {
 	# Tests were restricted because of this
 	sed -e 's/.*bus_dispatch_test.*/printf ("Disabled due to excess noise\\n");/' \
 	-e '/"dispatch"/d' -i "${S}/bus/test-main.c"
+	
+	epatch "${FILESDIR}"/${PN}-1.2.16-abstract-sockets.patch
+	#epatch "${FILESDIR}"/${PN}-1.3.0-asneeded.patch
+	eautoreconf
 }
 
 src_configure() {
