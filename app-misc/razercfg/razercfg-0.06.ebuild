@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
+EAPI=2
+
 inherit cmake-utils
 
 DESCRIPTION="Utility to for advanced configuration of Razer mice (DeathAdder, Krait, Lachesis)"
@@ -19,8 +21,21 @@ RDEPEND="${DEPEND}
 	dev-lang/python"
 DEPEND="${DEPEND}"
 
+src_prepare() {
+	sed -e 's/SYSFS{idVendor}/ATTRS{vendor}/' \
+		-i "${S}"/01-razer-udev.rules.template
+}
+	
+
 src_install() {
 	cmake-utils_src_install
-	newinitd razerd.initscript razerd
+	newinitd "${FILESDIR}/razerd.init" razerd
 	dodoc README
+	if ! use qt; then
+		rm "${D}"/usr/bin/qrazercfg
+	fi
+}
+
+pkg_postinst() {
+	udevadm control --reload-rules && udevadm trigger --subsystem-match=usb
 }
