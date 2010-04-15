@@ -40,7 +40,11 @@ src_prepare() {
 	sed -e 's/.*bus_dispatch_test.*/printf ("Disabled due to excess noise\\n");/' \
 	-e '/"dispatch"/d' -i "${S}/bus/test-main.c"
 	
+	# Nick a patch from Exherbo, for abstract sockets
 	epatch "${FILESDIR}"/${PN}-1.2.16-abstract-sockets.patch
+	# 7 Patches from FDO Bugzilla -
+	# https://bugs.freedesktop.org/show_bug.cgi?id=23117
+	epatch "${FILESDIR}"/speedups/*.patch
 	#epatch "${FILESDIR}"/${PN}-1.3.0-asneeded.patch
 	eautoreconf
 }
@@ -151,12 +155,8 @@ pkg_postinst() {
 	elog "To start the D-Bus system-wide messagebus by default"
 	elog "you should add it to the default runlevel :"
 	elog "\`rc-update add dbus default\`"
-	elog
 	elog "Some applications require a session bus in addition to the system"
 	elog "bus. Please see \`man dbus-launch\` for more information."
-	elog
-	elog
-	ewarn "You MUST run 'revdep-rebuild' after emerging this package"
 	elog
 	ewarn "You must restart D-Bus \`/etc/init.d/dbus restart\` to run"
 	ewarn "the new version of the daemon."
@@ -166,11 +166,5 @@ pkg_postinst() {
 		ewarn "You are currently running X with the hal useflag enabled"
 		ewarn "restarting the dbus service WILL restart X as well"
 		ebeep 5
-	fi
-
-	if use test; then
-		elog
-		ewarn "You have unit tests enabled, this results in an insecure library"
-		ewarn "It is recommended that you reinstall *without* FEATURES=test"
 	fi
 }
